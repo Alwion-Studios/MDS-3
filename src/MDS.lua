@@ -16,45 +16,6 @@ function MDS.CreateSchema(schemaDef: Schema): Schema
 
     Schemas[schemaDef.Name] = schemaDef
 
-    --Functions for Schemas
-    --Update Function
-    function schemaDef:UpdateValue(plr: Player, dataName, dataValue) 
-        self.Datastore:UpdateAsync(plr, function(oldData)
-            local newData = oldData
-            print(`Updating {dataName} with value {dataValue} ({type(dataValue)})`)
-            newData["version"] = oldData["version"]+1 or 1
-            newData["data"][dataName] = dataValue
-            return newData
-        end)
-    end
-
-    --DEPRECATED
-    --[[function schemaDef:UpdateValues(plr: Player, dataToUpdate) 
-        self.Datastore:UpdateAsync(plr, function(oldData)
-            local newData = oldData
-            newData["version"] = oldData["version"]+1 or 1
-
-            for dataName, dataValue in pairs(dataToUpdate) do 
-                print(`Updating {dataName} with value {dataValue} ({type(dataValue)})`)
-                newData["data"][dataName] = dataValue
-            end
-
-            return newData
-        end)
-    end]]
-
-    --Check to see if a user already has data
-    function schemaDef:UserDataExists(plr: Player)
-        local store
-
-        local success, _ = pcall(function()
-            store = self.Datastore:GetAsync(plr.UserId) or nil
-        end)
-
-        if not success or store == nil then return false end
-        return true
-    end
-
     return schemaDef
 end
 
