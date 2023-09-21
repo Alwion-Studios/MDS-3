@@ -1,0 +1,1 @@
+require(script.Parent.Schemas["Test.Schema"])

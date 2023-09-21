@@ -1,0 +1,25 @@
+{
+	"name": "MDS-Test",
+	"tree": {
+		"$className": "DataModel",
+        "ReplicatedStorage": {
+            "$className": "ReplicatedStorage",
+            "Packages": {
+                "$path": "."
+            }
+        },
+
+        "ServerScriptService": {
+            "$className": "ServerScriptService",
+            "$path": "test/ServerScripts"
+        },
+
+        "StarterPlayer": {
+            "$className": "StarterPlayer",
+            "StarterPlayerScripts": {
+              "$className": "StarterPlayerScripts",
+              "$path": "test/Client"
+            }
+        }
+	}
+}
