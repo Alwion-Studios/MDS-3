@@ -7,7 +7,6 @@ local TestSchema = MDS.CreateSchema({
     Name = "Test",
     Datastore = DS:GetDataStore("TEST_1"),
     DataStructure = {
-        ["TestValueStr"]="String",
         ["TestValueNum"]=1
     }
 })
