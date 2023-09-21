@@ -9,10 +9,10 @@ local Schemas: {[string]: Schema} = {}
 local MDS = {}
 
 function MDS.CreateSchema(schemaDef: Schema): Schema
-    assert(type(schemaDef) == "table", "Defined Schema must be a table")
-    assert(type(schemaDef.Name) == "string", "Schema.Name must be a string")
-    assert(#schemaDef.Name > 0, "Schema.Name must have a character")
-    assert(not Schemas[schemaDef.Name], `Schema "{schemaDef.Name}" already exists`)
+    if not type(schemaDef) == "table" then error("Defined Schema must be a table") end
+    if not type(schemaDef.Name) == "string" then error("Schema.Name must be a string") end
+    if #schemaDef.Name <= 0 then error("Schema.Name must have a character") end
+    if Schemas[schemaDef.Name] then error(`Schema "{schemaDef.Name}" already exists`) end
 
     Schemas[schemaDef.Name] = schemaDef
 
@@ -45,6 +45,18 @@ function MDS.CreateSchema(schemaDef: Schema): Schema
     end
 
     return schemaDef
+end
+
+function MDS.InitialiseSchemaDirectory(flr: Instance)
+    if not typeof(flr) == "Instance" then warn(`The provided folder ({flr}) is not an instance!`) end
+    if #flr:GetChildren() <= 0 then warn(`The provided folder ({flr.Name}) has no children`) end
+
+    for _, script in pairs(flr:GetChildren()) do
+        print(`Scanning {script.Name}`)
+        if not script:IsA("ModuleScript") then warn(`Scanned file ({script.Name}) is not a script`) end
+        require(script)
+        print(`Initialised Schema Layout for {script.Name}`)
+    end
 end
 
 function MDS.GetSchema(name: String)

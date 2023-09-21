@@ -8,7 +8,8 @@ local TestSchema = MDS.CreateSchema({
     Datastore = DS:GetDataStore("TEST_1"),
     DataStructure = {
         ["TestValueNum"]=1
-    }
+    },
+    CreateInstanceValues=true
 })
 
 --[[function TestSchema:AddToTest(plrId) 
