@@ -10,6 +10,6 @@ game:GetService("Players").PlayerAdded:Connect(function(plr)
 
     repeat wait(2)
         x += 1
-        Schema:UpdateValue(plr.UserId, "TestValueNum", x) 
+        Schema:AddOneToTestValue(plr.UserId, x) 
     until false
 end)
