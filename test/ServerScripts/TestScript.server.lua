@@ -3,8 +3,8 @@ local MDS = require(RS.Packages.MDS.MDS)
 
 game:GetService("Players").PlayerAdded:Connect(function(plr)
     local Schema = MDS.GetSchema("Test")
-
-    if not Schema:UserDataExists(plr) then MDS.SetPlayerDefaults(plr) end
+    MDS:InitialisePlayer(plr)
+    --[[if not Schema:UserDataExists(plr) then MDS.SetPlayerDefaults(plr) end
 
     local x = Schema.Datastore:GetAsync(plr.UserId)["data"]["TestValueNum"]
 
@@ -12,5 +12,5 @@ game:GetService("Players").PlayerAdded:Connect(function(plr)
         x -= 1
         print(x)
         Schema:AddOneToTestValue(plr.UserId, x) 
-    until false
+    until false]]
 end)

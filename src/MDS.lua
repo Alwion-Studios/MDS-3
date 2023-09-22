@@ -3,7 +3,7 @@ type Schema = {
     Name: string,
     Datastore: string,
     DataStructure: table,
-    DataStructureLimits: table
+    Options: table
 }
 
 local Schemas: {[string]: Schema} = {}
@@ -36,11 +36,11 @@ function MDS.InitialiseSchemaDirectory(flr: Instance): { Schema }
     return scannedScripts
 end
 
-function MDS.GetSchema(name: String)
+function MDS:GetSchema(name: String)
     return Schemas[name] or nil
 end
 
-function MDS.SetPlayerDefaults(plr: Player, schemaList: Table)
+function MDS:SetPlayerDefaults(plr: Player, schemaList: Table)
     if schemaList then
         for _, schema in pairs(schemaList) do
             if not Schemas[schema] then continue end
@@ -53,6 +53,15 @@ function MDS.SetPlayerDefaults(plr: Player, schemaList: Table)
     for _, schema in pairs(Schemas) do
         schema.Datastore:SetAsync(plr.UserId, {["data"]=schema["DataStructure"], ["version"]=1})
     end
+end
+
+function MDS:InitialisePlayer(plr: Player)
+    for name, schema in pairs(Schemas) do
+        if not schema:UserDataExists(plr) then self:SetPlayerDefaults(plr, {name}) end
+        schema:CreateDataValues(plr)
+    end
+
+    return true
 end
 
 return MDS

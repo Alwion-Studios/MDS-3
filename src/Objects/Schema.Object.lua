@@ -1,3 +1,10 @@
+-- Variable Types to DataValues
+local dataTypes = {
+    ["number"] = "NumberValue",
+    ["string"] = "StringValue",
+    ["boolean"] = "BoolValue"
+}
+
 -- Imports
 local DS = game:GetService("DataStoreService")
 local RS = game:GetService("ReplicatedStorage")
@@ -17,26 +24,29 @@ function SchemaIndex.New(name, datastore, structure, opts)
         Name = name,
         Datastore = DS:GetDataStore(datastore),
         DataStructure = structure,
-        DataStructureLimits=opts[2],
-        CreateInstanceValues=opts[1],
+        Options=opts,
     })
 
     return setmetatable(self, SchemaIndex)
 end
 
-function SchemaIndex:UpdateValue(plr: Player, dataName, dataValue)
-    if self["DataStructureLimits"] and self["DataStructureLimits"][dataName] then 
-        local limits = self["DataStructureLimits"][dataName]
-        if limits["type"] and type(dataValue) ~= limits["type"] then return warn(`[{self.Name}] WARNING: {dataName}'s value type is not valid`) end
-        if limits["max"] and type(dataValue) == "number" and dataValue >= limits["max"] then return warn(`[{self.Name}] WARNING: {dataName} has reached its maximum value`) end
-        if limits["min"] and type(dataValue) == "number" and dataValue <= limits["min"] then return warn(`[{self.Name}] WARNING: {dataName} has reached its minimum value`) end
-        if limits["max"] and type(dataValue) == "string" and #dataValue >= limits["max"] then return warn(`[{self.Name}] WARNING: {dataName} has reached its maximum length`) end
-        if limits["min"] and type(dataValue) == "string" and #dataValue <= limits["min"] then return warn(`[{self.Name}] WARNING: {dataName} has reached its minimum length`) end
+function SchemaIndex:GetUserData(plrID)
+    return self.Datastore:GetAsync(plrID) or nil
+end
+
+function SchemaIndex:UpdateValue(plrID, dataName, dataValue)
+    if self["Options"]["DataStructureLimits"] and self["Options"]["DataStructureLimits"][dataName] then 
+        local limits = self["Options"]["DataStructureLimits"][dataName]
+        if limits["type"] and type(dataValue) ~= limits["type"] then warn(`[{self.Name}] WARNING: {dataName}'s value type is not valid`) return false end
+        if limits["max"] and type(dataValue) == "number" and dataValue >= limits["max"] then warn(`[{self.Name}] WARNING: {dataName} has reached its maximum value`) return false end
+        if limits["min"] and type(dataValue) == "number" and dataValue <= limits["min"] then warn(`[{self.Name}] WARNING: {dataName} has reached its minimum value`) return false end
+        if limits["max"] and type(dataValue) == "string" and #dataValue >= limits["max"] then warn(`[{self.Name}] WARNING: {dataName} has reached its maximum length`) return false end
+        if limits["min"] and type(dataValue) == "string" and #dataValue <= limits["min"] then warn(`[{self.Name}] WARNING: {dataName} has reached its minimum length`) return false end
     end
 
-    self.Datastore:UpdateAsync(plr, function(oldData)
-        local currentVersion = self.Datastore:GetAsync(plr)["version"]
+    local currentVersion = self:GetUserData(plrID)["version"]
 
+    if self.Datastore:UpdateAsync(plrID, function(oldData)
         if oldData["version"] > currentVersion then
             warn(`[{self.Name}] WARNING: Data has been corrupted or lost!`)
             return oldData
@@ -48,14 +58,39 @@ function SchemaIndex:UpdateValue(plr: Player, dataName, dataValue)
 
         print(`[{self.Name} ({newData["version"]})] Updated {dataName} with value {dataValue} ({type(dataValue)})`)
         return newData
-    end)
+    end) then return true end
+    return false
+end
+
+function SchemaIndex:CreateDataValues(plr: Player)
+    if self["Options"]["CreateValueInstances"] then
+        local dir = plr:FindFirstChild("Data")
+        if not dir then dir = Instance.new("Folder"); dir.Name = "Data"; dir.Parent = plr end
+        
+        local data = self:GetUserData(plr.UserId)["data"]
+        for name, value in pairs(data) do
+            if not dataTypes[type(value)] then continue end
+            local dataValue = Instance.new(dataTypes[type(value)])
+
+            --Assign the Instance its value and name
+            dataValue.Value = value
+            dataValue.Name = name
+            dataValue.Parent = dir
+
+            --Update Hnadler
+            dataValue.Changed:Connect(function(newVal) 
+                if newVal == self:GetUserData(plr.UserId)["data"][name] then print(`[{self.Name}] CANCELLED: Requested Change for {name} has been cancelled as its new value is the same as its current`) return false end
+                if not self:UpdateValue(plr.UserId, name, newVal) then dataValue.Value = value end -- Call built-in Function to Update t
+            end)
+        end
+    end
 end
 
 function SchemaIndex:UserDataExists(plr: Player)
     local store
 
     local success, _ = pcall(function()
-        store = self.Datastore:GetAsync(plr.UserId) or nil
+        store = self:GetUserData(plr.UserId)
     end)
 
     if not success or store == nil then return false end
