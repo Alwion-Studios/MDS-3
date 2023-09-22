@@ -52,14 +52,4 @@ function SchemaIndex:UserDataExists(plr: Player)
     return true
 end
 
---[[function TestSchema:AddToTest(plrId) 
-    self.Datastore:UpdateAsync(plrId, function(oldData)
-        local newData = {}
-        newData["data"] = self["DataTbl"]
-        newData["TestValueNum"] += 1
-        newData["version"] = oldData["version"]+1 or 1
-        return newData
-    end)
-end]]
-
 return SchemaIndex

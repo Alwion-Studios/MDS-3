@@ -19,23 +19,27 @@ function MDS.CreateSchema(schemaDef: Schema): Schema
     return schemaDef
 end
 
-function MDS.InitialiseSchemaDirectory(flr: Instance)
+function MDS.InitialiseSchemaDirectory(flr: Instance): { Schema }
+    local scannedScripts = {}
     if not typeof(flr) == "Instance" then warn(`The provided folder ({flr}) is not an instance!`) end
     if #flr:GetChildren() <= 0 then warn(`The provided folder ({flr.Name}) has no children`) end
 
     for _, script in pairs(flr:GetChildren()) do
         print(`Scanning {script.Name}`)
         if not script:IsA("ModuleScript") then warn(`Scanned file ({script.Name}) is not a script`) end
-        require(script)
+        table.insert(scannedScripts, require(script))
         print(`Initialised Schema Layout for {script.Name}`)
     end
+
+    print(`Scanned {#flr:GetChildren()} Script(s) | Initialised {#scannedScripts} Schema(s)`)
+    return scannedScripts
 end
 
 function MDS.GetSchema(name: String)
     return Schemas[name] or nil
 end
 
-function MDS.SetPlrDefaults(plr: Player, schemaList: Table)
+function MDS.SetPlayerDefaults(plr: Player, schemaList: Table)
     if schemaList then
         for _, schema in pairs(schemaList) do
             if not Schemas[schema] then continue end

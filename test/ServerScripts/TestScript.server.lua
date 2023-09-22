@@ -4,7 +4,7 @@ local MDS = require(RS.Packages.MDS.MDS)
 game:GetService("Players").PlayerAdded:Connect(function(plr)
     local Schema = MDS.GetSchema("Test")
 
-    if not Schema:UserDataExists(plr) then MDS.SetPlrDefaults(plr) end
+    if not Schema:UserDataExists(plr) then MDS.SetPlayerDefaults(plr) end
 
     local x = Schema.Datastore:GetAsync(plr.UserId)["data"]["TestValueNum"]
 
