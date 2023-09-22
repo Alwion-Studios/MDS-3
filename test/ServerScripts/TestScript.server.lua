@@ -9,7 +9,8 @@ game:GetService("Players").PlayerAdded:Connect(function(plr)
     local x = Schema.Datastore:GetAsync(plr.UserId)["data"]["TestValueNum"]
 
     repeat wait(2)
-        x += 1
+        x -= 1
+        print(x)
         Schema:AddOneToTestValue(plr.UserId, x) 
     until false
 end)

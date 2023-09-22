@@ -3,6 +3,7 @@ type Schema = {
     Name: string,
     Datastore: string,
     DataStructure: table,
+    DataStructureLimits: table
 }
 
 local Schemas: {[string]: Schema} = {}
