@@ -55,6 +55,21 @@ function MDS:SetPlayerDefaults(plr: Player, schemaList: Table)
     end
 end
 
+function MDS:DeletePlayerData(plr: Player, schemaList: Table)
+    if schemaList then
+        for _, schema in pairs(schemaList) do
+            if not Schemas[schema] then continue end
+            Schemas[schema].Datastore:RemoveAsync(plr.UserId)
+        end
+
+        return true
+    end
+
+    for _, schema in pairs(Schemas) do
+        schema.Datastore:RemoveAsync(plr.UserId)
+    end
+end
+
 function MDS:InitialisePlayer(plr: Player)
     for name, schema in pairs(Schemas) do
         if not schema:UserDataExists(plr) then self:SetPlayerDefaults(plr, {name}) end
