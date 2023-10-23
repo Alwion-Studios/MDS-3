@@ -21,14 +21,21 @@ local MDS = {
 }
 MDS.__index = MDS
 
-function MDS.Initialise(directory: Instance): Promise
+function MDS.Initialise(directory: Instance)
     print(`Initialising {MDS.Product} {MDS.Version}`)
 
     for _, schema in pairs(directory:GetChildren()) do 
-        MDS.Schemas[schema]
+        local reqSchema = require(schema)
+        MDS.Schemas[reqSchema.Name] = reqSchema
+        print(reqSchema)
+        print(`[{MDS.Product}] Initialised {reqSchema.Name}`)
     end
 
-    return Promise.resolve(MDS.Version)
+    return true
+end
+
+function MDS:GetSchema(name): Promise
+    return Promise.resolve(self.Schemas[name])
 end
 
 return MDS

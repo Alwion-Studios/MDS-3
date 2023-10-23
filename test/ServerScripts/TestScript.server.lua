@@ -1,9 +1,10 @@
-local RS = game:GetService("ReplicatedStorage")
-local MDS = require(RS.Packages.MDS.Core)
+local SS = game:GetService("ServerScriptService")
+local MDS = require(SS.MDS.Core)
 
 game:GetService("Players").PlayerAdded:Connect(function(plr)
-    local Schema = MDS.GetSchema("Test")
-    MDS:InitialisePlayer(plr)
+    local result, schema = MDS:GetSchema("Test"):await()
+
+    print(schema)
     --[[if not Schema:UserDataExists(plr) then MDS.SetPlayerDefaults(plr) end
 
     local x = Schema.Datastore:GetAsync(plr.UserId)["data"]["TestValueNum"]

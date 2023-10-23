@@ -1,3 +1,5 @@
+--Operator Variables
+local isStudio = false
 --Types
 export type Schema = {
     Name: String,
@@ -14,11 +16,18 @@ local dataTypes = {
     ["boolean"] = "BoolValue"
 }
 
+local datastoreNamePrefix = {
+    [true] = "DEV",
+    [false] = "PROD"
+}
+
 -- Imports
 local DS = game:GetService("DataStoreService")
 local RS = game:GetService("ReplicatedStorage")
-local MDS = require(script.Parent.Parent.Core)
-local Promise = require(script.Parent.Parent.Packages.Promise)
+local RunService = game:GetService("RunService")
+local Promise = require(RS.Packages.Promise)
+
+if RunService:IsStudio() then isStudio = true end
 
 local Schema = {
     autoSaveIteral = 30,
@@ -29,8 +38,46 @@ Schema.__index = Schema
 function Schema.Create(name, structure, opts): Schema
     return setmetatable({
         Name = name,
-        Structure = structure
+        Structure = structure,
+        DataStore = DS:GetDataStore(`{name}-{datastoreNamePrefix[isStudio]}`)
     }, Schema)
+end
+
+function Schema:GetData(id)
+    return Promise.new(function(resolve, reject, onCancel) 
+        if not id or not typeof(id) == "number" then reject(false) end
+
+        resolve(self.DataStore:GetAsync(id))
+
+        onCancel(function() 
+            resolve(false)
+        end)
+    end)
+end
+
+function Schema:UpdateData(id)
+    return Promise.new(function(resolve, reject, onCancel) 
+        if not id or not typeof(id) == "number" then reject(false) end
+
+        onCancel(function() 
+            resolve(false)
+        end)
+    end)
+end
+
+function Schema:SaveData(id)
+    return Promise.new(function(resolve, reject, onCancel) 
+        if not id or not typeof(id) == "number" then reject(false) end
+
+        self:GetData(id):andThen(function(returned) 
+            if not returned or not typeof(returned) == "table" then reject(false) end
+            print(returned)
+        end)
+
+        onCancel(function() 
+            resolve(false)
+        end)
+    end)
 end
 
 return Schema

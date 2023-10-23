@@ -6,4 +6,4 @@ local MDS = require(SS.MDS.Core)
 
 --MDS.InitialiseSchemaDirectory(script.Parent.Schemas)
 
-MDS.Initialise(script.Parent.NewSchemas):andThen(print)
+MDS.Initialise(script.Parent.NewSchemas)
