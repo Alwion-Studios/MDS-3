@@ -1,5 +1,5 @@
 local RS = game:GetService("ReplicatedStorage")
-local MDS = require(RS.Packages.MDS.MDS)
+local MDS = require(RS.Packages.MDS.Core)
 
 game:GetService("Players").PlayerAdded:Connect(function(plr)
     local Schema = MDS.GetSchema("Test")

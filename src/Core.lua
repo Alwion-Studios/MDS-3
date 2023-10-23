@@ -1,15 +1,39 @@
+--VERSION
+local main = 3
+local update = 0
+local milestone = 1
+local iteration = 2
+local branch = "tb"
+
+--Imports
+local RS = game:GetService("ReplicatedStorage")
+local Promise = require(RS.Packages.Promise)
+
 -- Object Types
-type Schema = {
-    Name: string,
-    Datastore: string,
-    DataStructure: table,
-    Options: table
+
+--Promise Type
+export type Promise = typeof(Promise.new(function() end))
+
+local MDS = {
+    Schemas = {},
+    Product = `MDS`,
+    Version = `{branch}_{main}.{update}.{milestone}.{iteration}`
 }
+MDS.__index = MDS
 
-local Schemas: {[string]: Schema} = {}
-local MDS = {}
+function MDS.Initialise(directory: Instance): Promise
+    print(`Initialising {MDS.Product} {MDS.Version}`)
 
-function MDS.CreateSchema(schemaDef: Schema): Schema
+    for _, schema in pairs(directory:GetChildren()) do 
+        MDS.Schemas[schema]
+    end
+
+    return Promise.resolve(MDS.Version)
+end
+
+return MDS
+
+--[[function MDS.CreateSchema(schemaDef: Schema): Schema
     if not type(schemaDef) == "table" then error("Defined Schema must be a table") end
     if not type(schemaDef.Name) == "string" then error("Schema.Name must be a string") end
     if #schemaDef.Name <= 0 then error("Schema.Name must have a character") end
@@ -36,6 +60,10 @@ function MDS.InitialiseSchemaDirectory(flr: Instance): { Schema }
     return scannedScripts
 end
 
+function MDS:GetAllSchemas()
+    return Schemas
+end
+
 function MDS:GetSchema(name: String)
     return Schemas[name] or nil
 end
@@ -44,14 +72,19 @@ function MDS:SetPlayerDefaults(plr: Player, schemaList: Table)
     if schemaList then
         for _, schema in pairs(schemaList) do
             if not Schemas[schema] then continue end
-            Schemas[schema].Datastore:SetAsync(plr.UserId, {["data"]=schema["DataStructure"], ["version"]=1})
+            schema = Schemas[schema]
+            local tbl = {["data"]=schema["DataStructure"], ["version"]=1}
+            schema.Datastore:SetAsync(plr.UserId, {["data"]=schema["DataStructure"], ["version"]=1})
+            schema:SetPlayerData(plr.UserId, tbl)
         end
 
         return true
     end
 
     for _, schema in pairs(Schemas) do
-        schema.Datastore:SetAsync(plr.UserId, {["data"]=schema["DataStructure"], ["version"]=1})
+        local tbl = {["data"]=schema["DataStructure"], ["version"]=1}
+        schema.Datastore:SetAsync(plr.UserId, tbl)
+        schema:SetPlayerData(plr.UserId, tbl)
     end
 end
 
@@ -60,6 +93,7 @@ function MDS:DeletePlayerData(plr: Player, schemaList: Table)
         for _, schema in pairs(schemaList) do
             if not Schemas[schema] then continue end
             Schemas[schema].Datastore:RemoveAsync(plr.UserId)
+            print(`[{Schemas[schema].Name}] Deleted {plr.Name}'s data`)
         end
 
         return true
@@ -67,6 +101,7 @@ function MDS:DeletePlayerData(plr: Player, schemaList: Table)
 
     for _, schema in pairs(Schemas) do
         schema.Datastore:RemoveAsync(plr.UserId)
+        print(`[{schema.Name}] Deleted {plr.Name}'s data`)
     end
 end
 
@@ -77,6 +112,4 @@ function MDS:InitialisePlayer(plr: Player)
     end
 
     return true
-end
-
-return MDS
+end]]

@@ -9,7 +9,7 @@
   (Disclaimer: I thought this'd be funny. It's just a way to test for potential exploits)
 ]]
 local RS = game:GetService("ReplicatedStorage")
-local MDS = require(RS.Packages.MDS.MDS)
+local MDS = require(RS.Packages.MDS.Core)
 
 repeat
     wait(1)

@@ -1,6 +1,9 @@
 -- Imports
 local DS = game:GetService("DataStoreService")
 local RS = game:GetService("ReplicatedStorage")
-local MDS = require(RS.Packages.MDS.MDS)
+local SS = game:GetService("ServerScriptService")
+local MDS = require(SS.MDS.Core)
 
-MDS.InitialiseSchemaDirectory(script.Parent.Schemas)
+--MDS.InitialiseSchemaDirectory(script.Parent.Schemas)
+
+MDS.Initialise(script.Parent.NewSchemas):andThen(print)

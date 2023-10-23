@@ -5,13 +5,16 @@
         "ReplicatedStorage": {
             "$className": "ReplicatedStorage",
             "Packages": {
-                "$path": "."
+                "$path": "Packages"
             }
         },
 
         "ServerScriptService": {
             "$className": "ServerScriptService",
-            "$path": "test/ServerScripts"
+            "$path": "test/ServerScripts",
+            "MDS": {
+                "$path":"src"
+            }
         },
 
         "StarterPlayer": {
