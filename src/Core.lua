@@ -8,6 +8,7 @@ local branch = "tb"
 --Imports
 local RS = game:GetService("ReplicatedStorage")
 local Promise = require(RS.Packages.Promise)
+local Signal = require(RS.Packages.Signal)
 
 -- Object Types
 
@@ -17,20 +18,21 @@ export type Promise = typeof(Promise.new(function() end))
 local MDS = {
     Schemas = {},
     Product = `MDS`,
-    Version = `{branch}_{main}.{update}.{milestone}.{iteration}`
+    Version = `{branch}_{main}.{update}.{milestone}.{iteration}`,
 }
 MDS.__index = MDS
 
 function MDS.Initialise(directory: Instance)
-    print(`Initialising {MDS.Product} {MDS.Version}`)
+    print(`👋 {game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name} is supported by {MDS.Product} ({MDS.Version})`)
 
     for _, schema in pairs(directory:GetChildren()) do 
         local reqSchema = require(schema)
         MDS.Schemas[reqSchema.Name] = reqSchema
-        print(reqSchema)
+
         print(`[{MDS.Product}] Initialised {reqSchema.Name}`)
     end
 
+    MDS.LoadedSignal:Fire()
     return true
 end
 

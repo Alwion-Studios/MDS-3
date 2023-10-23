@@ -24,6 +24,7 @@ local datastoreNamePrefix = {
 -- Imports
 local DS = game:GetService("DataStoreService")
 local RS = game:GetService("ReplicatedStorage")
+local PS = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Promise = require(RS.Packages.Promise)
 
@@ -46,8 +47,12 @@ end
 function Schema:GetData(id)
     return Promise.new(function(resolve, reject, onCancel) 
         if not id or not typeof(id) == "number" then reject(false) end
+        print(self)
+        local result = self.DataStore:GetAsync(id)
 
-        resolve(self.DataStore:GetAsync(id))
+        if not result then resolve(false) end
+
+        resolve(result)
 
         onCancel(function() 
             resolve(false)
