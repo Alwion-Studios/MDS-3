@@ -53,8 +53,8 @@ function Schema:GetData()
         local result = self.DataStore:GetAsync(user)
 
         if not result then 
-            self.DataStore:SetAsync(user, {["data"]=self["Structure"], ["version"]=1})
-            result = {["data"]=self["Structure"], ["version"]=1}
+            self.DataStore:SetAsync(user, self["Structure"])
+            result = self["Structure"]
         end
 
         resolve(result)
@@ -80,16 +80,8 @@ function Schema:Save()
 
     return Promise.new(function(resolve, reject, onCancel) 
         self.DataStore:UpdateAsync(self.User, function(oldData) 
-            if oldData["version"] > self.Structure["version"] then
-                warn(`[{self.Name} - {MDS.Product}] WARNING: Data has been corrupted or lost!`)
-                return oldData
-            end
-
             if self["Structure"] == oldData then return nil end
-
-            self["Structure"]["version"] = oldData["version"]+1 or 1
-
-            print(`[{self.Name} ({self.Structure["version"]}) - {MDS.Product}] Wrote changes to datastore`)
+            print(`[{self.Name} - {MDS.Product}] Wrote changes to datastore`)
 
             return self.Structure
         end)
@@ -106,6 +98,12 @@ function Schema:CreateSession(id)
         self["User"] = id
 
         local _, data = self:GetData(id):await()
+
+        if data["version"] then 
+            print(`[{self.Name} - {MDS.Product}] MDS v2 format detected. Converting to v3.`)
+            data = data["data"]
+        end
+
         self["Structure"] = data
 
         return resolve(self)
