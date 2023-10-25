@@ -59,6 +59,7 @@ function MDS:GetSchema(name): Promise
     return Promise.resolve(self.Schemas[name])
 end
 
+--Session Code
 function MDS:CreateSession(id, schema: Schema): Promise
     if not schema or not id or not PS:GetPlayerByUserId(id) then return Promise.reject(false) end
     
@@ -66,6 +67,14 @@ function MDS:CreateSession(id, schema: Schema): Promise
     self.ActiveSessions[schema.Name][id] = newSession
 
     return Promise.resolve(newSession)
+end
+
+function MDS:GetSession(id, name): Promise 
+    if not id or not name then return Promise.reject(false) end
+    if not self.ActiveSessions[name] then return Promise.reject(false) end
+    if not self.ActiveSessions[name][id] then return Promise.reject(false) end
+
+    return Promise.resolve(self.ActiveSessions[name][id])
 end
 
 function MDS:CloseSessions(): Promise

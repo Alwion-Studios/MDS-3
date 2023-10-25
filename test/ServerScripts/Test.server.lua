@@ -11,6 +11,9 @@ PS.PlayerAdded:Connect(function(plr)
     
     local loaded, session, _ = MDS:GetSchema("Test"):andThen(function(schema) 
         local status, createdSession = MDS:CreateSession(plr.UserId, schema):await()
+        
+        if not status then plr:Kick("Failed to initialise a datastore session!") end
+
         return Promise.resolve(createdSession)
     end):await()
 
