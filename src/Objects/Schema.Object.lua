@@ -47,7 +47,7 @@ end
 
 function Schema:GetData()
     return Promise.new(function(resolve, reject, onCancel) 
-        local user = self["user"]
+        local user = self["Session"]["User"]
         local result = self.DataStore:GetAsync(user)
 
         if not result then 
@@ -63,7 +63,7 @@ function Schema:GetData()
     end)
 end
 
-function Schema:UpdateData()
+function Schema:Update()
     return Promise.new(function(resolve, reject, onCancel) 
         onCancel(function() 
             resolve(false)
@@ -71,19 +71,19 @@ function Schema:UpdateData()
     end)
 end
 
-function Schema:SaveData()
+function Schema:Save()
     return Promise.new(function(resolve, reject, onCancel) 
-        self.DataStore:UpdateAsync(self["user"], function(oldData) 
-            if oldData["version"] > self["Session"]["version"] then
+        self.DataStore:UpdateAsync(self["Session"]["User"], function(oldData) 
+            if oldData["version"] > self["Session"]["Structure"]["version"] then
                 warn(`[{MDS.Product}] WARNING: Data has been corrupted or lost!`)
                 return oldData
             end
 
-            self["Session"]["version"] = oldData["version"]+1
+            self["Session"]["Structure"]["version"] = oldData["version"]+1
 
-            print(`[{self.Name} ({self["Data"]["version"]})] Wrote changes to datastore`)
+            print(`[{self.Name} ({self["Session"]["Structure"]["version"]})] Wrote changes to datastore`)
 
-            return self["Session"]
+            return self["Session"]["Structure"]
         end)
 
         onCancel(function() 
@@ -94,10 +94,11 @@ end
 
 function Schema:CreateSession(id) 
     return Promise.new(function(resolve, reject, onCancel) 
-        self["user"] = id
+        self["Session"] = {}
+        self["Session"]["User"] = id
 
         local _, data = self:GetData(id):await()
-        self["Session"] = data
+        self["Session"]["Structure"] = data
 
         return resolve(self)
     end)
