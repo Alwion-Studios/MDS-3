@@ -1,3 +1,5 @@
+--!nonstrict
+
 --VERSION
 local main = 3
 local update = 0
@@ -12,6 +14,13 @@ local Promise = require(RS.Packages.Promise)
 local Signal = require(RS.Packages.Signal)
 
 -- Object Types
+export type Schema = {
+    Name: String,
+    AutoSaveInterval: Number,
+    DataStore: DataStore,
+    Session: table,
+    Options: table
+}
 
 --Promise Type
 export type Promise = typeof(Promise.new(function() end))
@@ -25,16 +34,18 @@ local MDS = {
     },
     Status = {
         hasInitialised = false
-    }
+    },
+    ActiveSessions = {}
 }
-MDS.__index = MDS
 
 function MDS.Initialise(directory: Instance)
     print(`👋 {game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name} is supported by {MDS.Product} ({MDS.Version})`)
 
     for _, schema in pairs(directory:GetChildren()) do 
         local reqSchema = require(schema)
+
         MDS.Schemas[reqSchema.Name] = reqSchema
+        MDS.ActiveSessions[reqSchema.Name] = {}
 
         print(`[{MDS.Product}] Initialised {reqSchema.Name}`)
     end
@@ -48,9 +59,32 @@ function MDS:GetSchema(name): Promise
     return Promise.resolve(self.Schemas[name])
 end
 
-function MDS:CreateSession(schema, id): Promise
-    schema["user"] = id
-    return Promise.resolve(schema)
+function MDS:CreateSession(id, schema: Schema): Promise
+    if not schema or not id or not PS:GetPlayerByUserId(id) then return Promise.reject(false) end
+    
+    local status, newSession = schema:CreateSession(id):await()
+    self.ActiveSessions[schema.Name][id] = newSession
+
+    return Promise.resolve(newSession)
 end
+
+function MDS:CloseSessions(): Promise
+    print(`[{self.Product}] Closing Sessions`)
+
+    for name, schema in pairs(self.ActiveSessions) do 
+        for id, session in pairs(schema) do 
+            print(`[{self.Product}] Closing Schema ({name}) Session ({id})`)
+            local status, _ = session:CloseSession()
+            if not status then warn(`[{self.Product}] Session ({id}) did not successfully save`) end
+            session = nil
+        end 
+    end
+
+    return Promise.resolve(true)
+end
+
+game:BindToClose(function() 
+    MDS:CloseSessions():await()
+end)
 
 return MDS

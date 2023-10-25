@@ -10,10 +10,11 @@ PS.PlayerAdded:Connect(function(plr)
     if not MDS.Status.hasInitialised then MDS.Events.hasLoaded:Wait() end
     
     local loaded, session, _ = MDS:GetSchema("Test"):andThen(function(schema) 
-        return Promise.resolve(schema:CreateSession(plr.UserId))
+        local status, createdSession = MDS:CreateSession(plr.UserId, schema):await()
+        return Promise.resolve(createdSession)
     end):await()
 
     print(`Loaded Session for {plr.Name}`)
-    print(session:OutputTest())
+    print(session)
     session:Save()
 end)
