@@ -1,8 +1,8 @@
 --VERSION
 local main = 3
 local update = 0
-local milestone = 1
-local iteration = 2
+local milestone = 0
+local iteration = 5
 local branch = "tb"
 
 --Imports
@@ -22,6 +22,9 @@ local MDS = {
     Version = `{branch}_{main}.{update}.{milestone}.{iteration}`,
     Events = {
         hasLoaded = Signal.new()
+    },
+    Status = {
+        hasInitialised = false
     }
 }
 MDS.__index = MDS
@@ -36,6 +39,7 @@ function MDS.Initialise(directory: Instance)
         print(`[{MDS.Product}] Initialised {reqSchema.Name}`)
     end
 
+    MDS.Status.hasInitialised = true
     MDS.Events.hasLoaded:Fire()
     return true
 end

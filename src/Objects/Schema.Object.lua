@@ -46,7 +46,7 @@ function Schema.Create(name, structure, opts): Schema
 end
 
 function Schema:GetData()
-    if not self["Session"] then return false end
+    if not self.Session then return false end
 
     return Promise.new(function(resolve, reject, onCancel) 
         local user = self["Session"]["User"]
@@ -66,7 +66,7 @@ function Schema:GetData()
 end
 
 function Schema:Update()
-    if not self["Session"] then return false end
+    if not self.Session then return false end
 
     return Promise.new(function(resolve, reject, onCancel) 
         onCancel(function() 
@@ -76,22 +76,22 @@ function Schema:Update()
 end
 
 function Schema:Save()
-    if not self["Session"] then return false end
+    if not self.Session then return false end
 
     return Promise.new(function(resolve, reject, onCancel) 
-        self.DataStore:UpdateAsync(self["Session"]["User"], function(oldData) 
-            if oldData["version"] > self["Session"]["Structure"]["version"] then
+        self.DataStore:UpdateAsync(self.Session["User"], function(oldData) 
+            if oldData["version"] > self.Session["Structure"]["version"] then
                 warn(`[{self.Name} - {MDS.Product}] WARNING: Data has been corrupted or lost!`)
                 return oldData
             end
 
-            if self["Session"]["Structure"] == oldData then return nil end
+            if self.Session["Structure"] == oldData then return nil end
 
-            self["Session"]["Structure"]["version"] = oldData["version"]+1
+            self.Session["Structure"]["version"] = oldData["version"]+1
 
-            print(`[{self.Name} ({self["Session"]["Structure"]["version"]}) - {MDS.Product}] Wrote changes to datastore`)
+            print(`[{self.Name} ({self.Session["Structure"]["version"]}) - {MDS.Product}] Wrote changes to datastore`)
 
-            return self["Session"]["Structure"]
+            return self.Session["Structure"]
         end)
 
         onCancel(function() 
@@ -103,11 +103,11 @@ end
 --Session Code
 function Schema:CreateSession(id) 
     return Promise.new(function(resolve, reject, onCancel) 
-        self["Session"] = {}
-        self["Session"]["User"] = id
+        self.Session = {}
+        self.Session["User"] = id
 
         local _, data = self:GetData(id):await()
-        self["Session"]["Structure"] = data
+        self.Session["Structure"] = data
 
         return resolve(self)
     end)
