@@ -14,5 +14,6 @@ PS.PlayerAdded:Connect(function(plr)
     end):await()
 
     print(`Loaded Session for {plr.Name}`)
+    print(session:OutputTest())
     session:Save()
 end)
