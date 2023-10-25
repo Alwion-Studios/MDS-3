@@ -10,8 +10,5 @@ PS.PlayerAdded:Connect(function(plr)
     if not MDS.Status.hasInitialised then MDS.Events.hasLoaded:Wait() end
     wait(2)
     local loaded, session, _ = MDS:GetSession(plr.UserId, "Test"):await()
-
     print(session:OutputTest())
-    wait(1)
-    session:Save()
 end)
