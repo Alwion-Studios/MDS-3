@@ -7,3 +7,4 @@ realm = "shared"
 [dependencies]
 Signal = "lucasmzreal/fastsignal@10.2.1"
 Promise = "evaera/promise@^4"
+TableUtil = "sleitnick/table-util@^1"
