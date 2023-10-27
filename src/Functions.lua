@@ -1,3 +1,0 @@
-local functions = {}
-
-return functions

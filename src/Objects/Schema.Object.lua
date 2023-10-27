@@ -48,16 +48,17 @@ function Schema.Create(name, structure, opts): Schema
     }, Schema)
 end
 
---Session Cache Functions
-function Schema:GetCache()
+--Session Serialisation Functions
+function Schema:GetStructure()
     return self["Structure"]
 end
 
-function Schema:RefreshCache()
+function Schema:Serialise()
     if not self.Id then return false end
 
     return Promise.new(function(resolve, reject, onCancel) 
         local result = self.DataStore:GetAsync(self.Id)
+
 
         if not result then 
             self.DataStore:SetAsync(self.Id, self["Structure"])
@@ -72,13 +73,9 @@ function Schema:RefreshCache()
     end)
 end
 
-function Schema:UpdateCache()
-    if not self.Session then return false end
-
+function Schema:ScanForChanges(toScan, toModify)
     return Promise.new(function(resolve, reject, onCancel) 
-        onCancel(function() 
-            resolve(false)
-        end)
+
     end)
 end
 
@@ -121,7 +118,7 @@ function Schema:CreateSession(id)
     return Promise.new(function(resolve, reject, onCancel) 
         self.Id = id
 
-        local _, data = self:RefreshCache(id):await()
+        local _, data = self:Serialise(id):await()
 
         if data["version"] then 
             print(`[{self.Name} - {MDS.Product}] MDS v2 format detected. Converting to v3.`)
