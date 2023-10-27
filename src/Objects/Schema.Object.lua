@@ -45,15 +45,18 @@ function Schema.Create(name, structure, opts): Schema
     }, Schema)
 end
 
-function Schema:GetData()
+function Schema:Get()
+    return self["Structure"]
+end
+
+function Schema:RefreshCache()
     if not self.User then return false end
 
     return Promise.new(function(resolve, reject, onCancel) 
-        local user = self["User"]
-        local result = self.DataStore:GetAsync(user)
+        local result = self.DataStore:GetAsync(self.User)
 
         if not result then 
-            self.DataStore:SetAsync(user, self["Structure"])
+            self.DataStore:SetAsync(self.User, self["Structure"])
             result = self["Structure"]
         end
 
@@ -97,7 +100,7 @@ function Schema:CreateSession(id)
     return Promise.new(function(resolve, reject, onCancel) 
         self["User"] = id
 
-        local _, data = self:GetData(id):await()
+        local _, data = self:RefreshCache(id):await()
 
         if data["version"] then 
             print(`[{self.Name} - {MDS.Product}] MDS v2 format detected. Converting to v3.`)
