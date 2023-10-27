@@ -19,5 +19,5 @@ PS.PlayerAdded:Connect(function(plr)
 
     print(`Loaded Session for {plr.Name}`)
     print(session)
-    session:DeleteStore()
+    --session:DeleteStore()
 end)

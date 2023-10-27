@@ -77,12 +77,10 @@ function MDS:GetSession(id, name): Promise
     return Promise.resolve(self.ActiveSessions[name][id])
 end
 
-function MDS:CloseSession(id, name): Promise
-    if not id or not name then return Promise.reject(false) end
-    if not self.ActiveSessions[name] then return Promise.reject(false) end
-    if not self.ActiveSessions[name][id] then return Promise.reject(false) end
-
-    self.ActiveSessions[name][id] = nil
+function MDS:CloseSession(id, session): Promise
+    local status, _ = session:CloseSession()
+    if not status then warn(`[{self.Product}] Session ({id}) did not successfully save`) end
+    session = nil
 
     return Promise.resolve(true)
 end
@@ -93,9 +91,7 @@ function MDS:CloseSessions(): Promise
     for name, schema in pairs(self.ActiveSessions) do 
         for id, session in pairs(schema) do 
             print(`[{self.Product}] Closing Schema ({name}) Session ({id})`)
-            local status, _ = session:CloseSession()
-            if not status then warn(`[{self.Product}] Session ({id}) did not successfully save`) end
-            session = nil
+            self:CloseSession(id, session)
         end 
     end
 
