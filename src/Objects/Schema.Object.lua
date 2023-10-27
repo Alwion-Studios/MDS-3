@@ -31,6 +31,7 @@ local PS = game:GetService("Players")
 local MDS = require(script.Parent.Parent.Core)
 local RunService = game:GetService("RunService")
 local Promise = require(RS.Packages.Promise)
+local TblUtil = require(RS.Packages.TableUtil)
 
 if RunService:IsStudio() then isStudio = true end
 
@@ -58,9 +59,9 @@ function Schema:Serialise()
 
     return Promise.new(function(resolve, reject, onCancel) 
         local result = self.DataStore:GetAsync(self.Id)
+        result = self:Sync(result, self["Structure"])
 
-
-        if not result then 
+        if not result or type(result) ~= "table" then 
             self.DataStore:SetAsync(self.Id, self["Structure"])
             result = self["Structure"]
         end
@@ -73,10 +74,26 @@ function Schema:Serialise()
     end)
 end
 
-function Schema:ScanForChanges(toScan, toModify)
-    return Promise.new(function(resolve, reject, onCancel) 
+--Consistency Functions
+function Schema:Sync(data, template) 
+    if type(data) ~= "table" or type(template) ~= "table" then warn(`[{self.Name} - {MDS.Product}] provided paramater(s) are not tables`) end
+    local toReturn = table.clone(data)
 
-    end)
+    for name, value in template do 
+        local source = data[name]
+        if source ~= nil and type(source) ~= "table" then continue end
+
+        if type(source) == "table" then 
+            if type(value) ~= "table" then TblUtil.Copy(source, true) continue end    
+            toReturn[name] = self:Sync(source, value)
+            continue
+        end
+
+        if type(value) ~= "table" then TblUtil.Copy(source, true) continue end    
+        toReturn[name] = value
+    end
+
+    return toReturn
 end
 
 -- Datastore Functions
