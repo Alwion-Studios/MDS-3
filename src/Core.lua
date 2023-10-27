@@ -77,6 +77,16 @@ function MDS:GetSession(id, name): Promise
     return Promise.resolve(self.ActiveSessions[name][id])
 end
 
+function MDS:CloseSession(id, name): Promise
+    if not id or not name then return Promise.reject(false) end
+    if not self.ActiveSessions[name] then return Promise.reject(false) end
+    if not self.ActiveSessions[name][id] then return Promise.reject(false) end
+
+    self.ActiveSessions[name][id] = nil
+
+    return Promise.resolve(true)
+end
+
 function MDS:CloseSessions(): Promise
     print(`[{self.Product}] Closing Sessions`)
 

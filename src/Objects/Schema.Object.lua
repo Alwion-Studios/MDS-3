@@ -6,7 +6,10 @@ export type Schema = {
     AutoSaveInterval: Number,
     DataStore: DataStore,
     Structure: table,
-    Options: table
+    Options: table,
+
+    --Booleans
+    IsResetting: boolean
 }
 
 -- Variable Types to DataValues
@@ -33,7 +36,7 @@ if RunService:IsStudio() then isStudio = true end
 
 local Schema = {
     autoSaveIteral = 30,
-    dataQueue = {},
+    dataQueue = {}
 }
 Schema.__index = Schema
 
@@ -45,18 +48,19 @@ function Schema.Create(name, structure, opts): Schema
     }, Schema)
 end
 
-function Schema:Get()
+--Session Cache Functions
+function Schema:GetCache()
     return self["Structure"]
 end
 
 function Schema:RefreshCache()
-    if not self.User then return false end
+    if not self.Id then return false end
 
     return Promise.new(function(resolve, reject, onCancel) 
-        local result = self.DataStore:GetAsync(self.User)
+        local result = self.DataStore:GetAsync(self.Id)
 
         if not result then 
-            self.DataStore:SetAsync(self.User, self["Structure"])
+            self.DataStore:SetAsync(self.Id, self["Structure"])
             result = self["Structure"]
         end
 
@@ -68,7 +72,7 @@ function Schema:RefreshCache()
     end)
 end
 
-function Schema:Update()
+function Schema:UpdateCache()
     if not self.Session then return false end
 
     return Promise.new(function(resolve, reject, onCancel) 
@@ -78,11 +82,28 @@ function Schema:Update()
     end)
 end
 
-function Schema:Save()
-    if not self.User then return false end
+-- Datastore Functions
+function Schema:DeleteStore()
+    if not self.Id then return false end
+    warn(`[{self.Name} - {MDS.Product}] Deleting Datastore with ID {self.Id}`)
 
     return Promise.new(function(resolve, reject, onCancel) 
-        self.DataStore:UpdateAsync(self.User, function(oldData) 
+        self.DataStore:RemoveAsync(self.Id)
+        --self:RefreshCache()
+        warn(`[{self.Name} - {MDS.Product}] Closing Session`)
+        MDS:CloseSession(self.Id, self.Name)
+        
+        onCancel(function() 
+            resolve(false)
+        end)
+    end)
+end
+
+function Schema:SaveStore()
+    if not self.Id then return false end
+
+    return Promise.new(function(resolve, reject, onCancel) 
+        self.DataStore:UpdateAsync(self.Id, function(oldData) 
             if self["Structure"] == oldData then return nil end
             print(`[{self.Name} - {MDS.Product}] Wrote changes to datastore`)
 
@@ -98,7 +119,7 @@ end
 --Session Code
 function Schema:CreateSession(id) 
     return Promise.new(function(resolve, reject, onCancel) 
-        self["User"] = id
+        self.Id = id
 
         local _, data = self:RefreshCache(id):await()
 
@@ -113,9 +134,10 @@ function Schema:CreateSession(id)
     end)
 end
 
-function Schema:CloseSession()
+function Schema:CloseSession(refuseSave)
+    if refuseSave then return false end
     return Promise.new(function(resolve, reject, onCancel) 
-        local status, _ = self:Save():await()
+        local status, _ = self:SaveStore():await()
         if not status then return reject(false) end
         return resolve(true)
     end)
