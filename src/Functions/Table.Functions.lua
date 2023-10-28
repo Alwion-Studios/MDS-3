@@ -11,7 +11,7 @@ function TableFunctions.FindAndEdit(path, data, key, value)
 
         for scannedName, _ in tbl do 
             local source = tbl[scannedName]
-            print(source)
+
             if source[key] then 
                 print(`{key} Found`)
                 source[key] = value

@@ -102,7 +102,7 @@ end
 --Key-value Functions
 function Schema:SetKey(path, key, value)
     return Promise.new(function(resolve, reject, onCancel) 
-        TableFunctions.FindAndEdit(path, self.Structure, key, value) 
+        self.Structure = TableFunctions.FindAndEdit(path, self.Structure, key, value) 
     end)
 end
 
