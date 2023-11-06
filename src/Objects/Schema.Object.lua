@@ -36,6 +36,7 @@ local Promise = require(RS.Packages.Promise)
 if RunService:IsStudio() then isStudio = true end
 
 local Schema = {
+    assumeDeadSessionLock = 30 * 60,
     autoSaveIteral = 30,
     isLocked = false,
     dataQueue = {}
@@ -120,16 +121,23 @@ function Schema:DeleteStore()
     end)
 end
 
-function Schema:SaveStore()
+function Schema:SaveStore(structure)
     if not self.Id then return false end
 
     return Promise.new(function(resolve, reject, onCancel) 
         self.DataStore:UpdateAsync(self.Id, function(oldData) 
-            if oldData["sessionJobId"] and oldData["sessionJobId"] ~= game.JobId then warn(`[{self.Name} - {MDS.Product}] UpdateAsync cancelled as session is currently in-use on another server`) return nil end
-            if self["Structure"] == oldData then print(`[{self.Name} - {MDS.Product}] Data remains unchanged. Save process aborted.`) return nil end
+            local toSave = {}
+
+            toSave = self["Structure"] 
+            toSave["Metadata"] = self["Metadata"]
+
+            if not oldData["Metadata"] then return toSave end
+
+            if oldData["Metadata"] and oldData["Metadata"]["Session"][1] ~= game.PlaceId or oldData["Metadata"]["Session"][2] ~= game.JobId then warn(`[{self.Name} - {MDS.Product}] UpdateAsync cancelled as session is currently in-use on another server`) return nil end
+            if toSave == oldData then warn(`[{self.Name} - {MDS.Product}] Data remains unchanged. Save process aborted.`) return nil end
             print(`[{self.Name} - {MDS.Product}] Wrote changes to datastore`)
 
-            return self.Structure
+            return toSave
         end)
 
         onCancel(function() 
@@ -144,8 +152,13 @@ function Schema:Start(id)
         self.Id = id
 
         local _, data = self:Serialise(id):await()
-        
-        if data["sessionJobId"] and data["sessionJobId"] ~= game.JobId then
+
+        if not data["Metadata"] then 
+            data["Metadata"] = {}
+            data["Metadata"]["Session"] = {game.PlaceId, game.JobId or 0}
+        end
+
+        if data["Metadata"] and data["Metadata"]["Session"][1] ~= game.PlaceId or data["Metadata"]["Session"][2] ~= game.JobId then
             warn(`[{self.Name} - {MDS.Product}] Datastore with ID {id} is locked as it's in use on another server`)
             return reject(false)
         end
@@ -155,9 +168,14 @@ function Schema:Start(id)
             data = data["data"]
         end
 
+        self["Metadata"] = data["Metadata"]
         self["Structure"] = data
-        self["Structure"]["sessionJobId"] = game.JobId or 0
+
+        --self["Structure"]["Metadata"] = {}
+        --self["Structure"]["Metadata"]["Session"] = {game.PlaceId, game.JobId or 0}
+        
         self:SaveStore()
+        self["Structure"]["Metadata"] = nil
 
         return resolve(self)
     end)
