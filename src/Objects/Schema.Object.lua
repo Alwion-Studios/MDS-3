@@ -123,7 +123,7 @@ function Schema:SaveStore()
 
     return Promise.new(function(resolve, reject, onCancel) 
         self.DataStore:UpdateAsync(self.Id, function(oldData) 
-            if self["Structure"] == oldData then return nil end
+            if self["Structure"] == oldData then print(`[{self.Name} - {MDS.Product}] Data remains unchanged. Save process aborted.`) return nil end
             print(`[{self.Name} - {MDS.Product}] Wrote changes to datastore`)
 
             return self.Structure
@@ -136,7 +136,7 @@ function Schema:SaveStore()
 end
 
 --Session Code
-function Schema:CreateSession(id) 
+function Schema:Start(id) 
     return Promise.new(function(resolve, reject, onCancel) 
         self.Id = id
 
@@ -153,7 +153,7 @@ function Schema:CreateSession(id)
     end)
 end
 
-function Schema:CloseSession(refuseSave)
+function Schema:Close(refuseSave)
     if refuseSave then return false end
     return Promise.new(function(resolve, reject, onCancel) 
         local status, _ = self:SaveStore():await()

@@ -63,7 +63,7 @@ end
 function MDS:CreateSession(id, schema: Schema): Promise
     if not schema or not id or not PS:GetPlayerByUserId(id) then return Promise.reject(false) end
     
-    local status, newSession = schema:CreateSession(id):await()
+    local status, newSession = schema:Start(id):await()
     self.ActiveSessions[schema.Name][id] = newSession
 
     return Promise.resolve(newSession)
@@ -78,7 +78,7 @@ function MDS:GetSession(id, name): Promise
 end
 
 function MDS:CloseSession(id, session): Promise
-    local status, _ = session:CloseSession()
+    local status, _ = session:Close()
     if not status then warn(`[{self.Product}] Session ({id}) did not successfully save`) end
     session = nil
 
