@@ -2,7 +2,7 @@ local RS = game:GetService("ReplicatedStorage")
 
 local TableFunctions = {}
 
-function TableFunctions.FindAndEdit(path, data, key, value) 
+local function FindAndEdit(path, data, key, value) 
     local toReturn = table.clone(data)
 
     local function scan(tbl) 
@@ -32,32 +32,32 @@ end
 
 --[[ CREDIT TO SLEITNICK AND HIS TableUtil Module 
     Review @ https://github.com/Sleitnick/RbxUtil/]]
-function TableFunctions.DeepCopy(t)
+local function DeepCopy(t)
     local copy = table.clone(t)
     for name, value in copy do 
-        if type(value) == "table" then copy[name] = TableFunctions.DeepCopy(value) end
+        if type(value) == "table" then copy[name] = DeepCopy(value) end
     end
     return copy
 end
 
 --[[ CREDIT TO SLEITNICK AND HIS TableUtil Module 
     Review @ https://github.com/Sleitnick/RbxUtil/]]
-function TableFunctions.Sync(data, template) 
+local function Sync(data, template) 
     local toReturn = table.clone(data)
 
     for name, value in template do
 		local source = data[name]
 		if source == nil then
 			if type(value) == "table" then
-				toReturn[name] = TableFunctions.DeepCopy(value)
+				toReturn[name] = DeepCopy(value)
 			else
 				toReturn[name] = value
 			end
 		elseif type(source) == "table" then
 			if type(value) == "table" then
-				toReturn[name] = TableFunctions.Sync(source, value)
+				toReturn[name] = Sync(source, value)
 			else
-				toReturn[name] = TableFunctions.DeepCopy(source)
+				toReturn[name] = DeepCopy(source)
 			end
 		end
 	end
@@ -65,7 +65,7 @@ function TableFunctions.Sync(data, template)
     return toReturn
 end
 
-function TableFunctions.Find(path, data, key) 
+local function Find(path, data, key) 
     local function scan(tbl) 
         for scannedName, _ in tbl do 
             local source = tbl[scannedName]
@@ -87,5 +87,10 @@ function TableFunctions.Find(path, data, key)
 
     return scan(data)
 end
+
+TableFunctions.DeepCopy = DeepCopy
+TableFunctions.Sync = Sync
+TableFunctions.FindAndEdit = FindAndEdit
+TableFunctions.Find = Find
 
 return TableFunctions
