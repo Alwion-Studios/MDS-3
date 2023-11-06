@@ -24,4 +24,12 @@ TestSchema = Schema.Create("UserTest",
     }
 )
 
+function TestSchema:SetCoins(newAmount) 
+    if not self.Id then return false end
+
+    local _, value = self:GetKey({"Inventory"}, "Cash"):await()
+    newAmount += value
+    self:SetKey({"Inventory"}, "Cash", newAmount)
+end
+
 return TestSchema

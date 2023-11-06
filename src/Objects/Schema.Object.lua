@@ -96,6 +96,12 @@ function Schema:SetKey(path, key, value)
     end)
 end
 
+function Schema:GetKey(path, key)
+    return Promise.new(function(resolve, reject, onCancel) 
+        return resolve(TableFunctions.Find(path, self.Structure, key))
+    end)
+end
+
 -- Datastore Functions
 function Schema:DeleteStore()
     if not self.Id then return false end

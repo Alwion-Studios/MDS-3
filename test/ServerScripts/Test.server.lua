@@ -19,6 +19,6 @@ PS.PlayerAdded:Connect(function(plr)
 
     print(`Loaded Session for {plr.Name}`)
     print(session)
-    session:SetKey({"Inventory"}, "Cash", 10)
+    session:SetCoins(10) 
     --session:DeleteStore()
 end)

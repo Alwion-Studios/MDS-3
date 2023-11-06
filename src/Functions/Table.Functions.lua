@@ -31,4 +31,27 @@ function TableFunctions.FindAndEdit(path, data, key, value)
     return toReturn
 end
 
+function TableFunctions.Find(path, data, key) 
+    local function scan(tbl) 
+        for scannedName, _ in tbl do 
+            local source = tbl[scannedName]
+
+            if source[key] then 
+                print(`{key} Found`)
+                return source[key]
+            end
+
+            for _, directory in path do 
+                if source[directory] and type(source[directory]) == "table" then 
+                    tbl[scannedName] = scan(source)
+                end
+            end
+        end
+
+        return false
+    end
+
+    return scan(data)
+end
+
 return TableFunctions
