@@ -30,6 +30,8 @@ function TableFunctions.FindAndEdit(path, data, key, value)
     return toReturn
 end
 
+--[[ CREDIT TO SLEITNICK AND HIS TableUtil Module 
+    Review @ https://github.com/Sleitnick/RbxUtil/]]
 function TableFunctions.DeepCopy(t)
     local copy = table.clone(t)
     for name, value in copy do 
@@ -38,6 +40,8 @@ function TableFunctions.DeepCopy(t)
     return copy
 end
 
+--[[ CREDIT TO SLEITNICK AND HIS TableUtil Module 
+    Review @ https://github.com/Sleitnick/RbxUtil/]]
 function TableFunctions.Sync(data, template) 
     local toReturn = table.clone(data)
 
