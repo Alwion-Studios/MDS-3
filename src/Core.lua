@@ -90,8 +90,8 @@ function MDS:CloseSessions(): Promise
 
     for name, schema in pairs(self.ActiveSessions) do 
         for id, session in pairs(schema) do 
-            print(`[{self.Product}] Closing Schema ({name}) Session ({id})`)
             self:CloseSession(id, session)
+            print(`[{self.Product}] Closed Serialised Schema ({name}) Session ({id})`)
         end 
     end
 

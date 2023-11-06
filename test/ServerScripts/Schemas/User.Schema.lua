@@ -1,5 +1,7 @@
 local SS = game:GetService("ServerScriptService")
 local Schema = require(SS.MDS.Objects["Schema.Object"])
+local RS = game:GetService("ReplicatedStorage")
+local Promise = require(RS.Packages.Promise)
 
 local TestSchema: Schema = {}
 
@@ -24,15 +26,16 @@ TestSchema = Schema.Create("UserTest",
     }
 )
 
-function TestSchema:SetCoins(newAmount) 
+function TestSchema:SetCoins(toAdd) 
     if not self.Id then return false end
 
     --Get the User's current cash value
-    local _, value = self:GetKey({"Inventory"}, "Cash"):await()
-    newAmount += value
-
-    --Set the cash key to the new value
-    self:SetKey({"Inventory"}, "Cash", newAmount)
+    self:GetKey({"Inventory"}, "Cash"):andThen(function(res) 
+        if not typeof(res) == "number" then return false end
+        res += toAdd
+        --Set the cash key to the new value
+        self:SetKey({"Inventory"}, "Cash", res):await()
+    end)
 end
 
 return TestSchema

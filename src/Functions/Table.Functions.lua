@@ -12,9 +12,9 @@ local function FindAndEdit(path, data, key, value)
             local source = tbl[scannedName]
 
             if source[key] then 
-                print(`{key} Found`)
+               -- print(`{key} Found`)
                 source[key] = value
-                print(`{key} Set to {value}`)
+                --print(`{key} Set to {value}`)
                 return true
             end
 
@@ -71,7 +71,7 @@ local function Find(path, data, key)
             local source = tbl[scannedName]
 
             if source[key] then 
-                print(`{key} Found`)
+                --print(`{key} Found`)
                 return source[key]
             end
 
