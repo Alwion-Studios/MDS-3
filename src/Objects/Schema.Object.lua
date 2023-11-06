@@ -37,6 +37,7 @@ if RunService:IsStudio() then isStudio = true end
 
 local Schema = {
     autoSaveIteral = 30,
+    isLocked = false,
     dataQueue = {}
 }
 Schema.__index = Schema
@@ -90,6 +91,7 @@ end
 --Key-value Functions
 function Schema:SetKey(path, key, value)
     return Promise.new(function(resolve, reject, onCancel) 
+        self.IsLocked = true
         self.Structure = TableFunctions.FindAndEdit(path, self.Structure, key, value) 
         return resolve(true)
     end)
@@ -123,6 +125,7 @@ function Schema:SaveStore()
 
     return Promise.new(function(resolve, reject, onCancel) 
         self.DataStore:UpdateAsync(self.Id, function(oldData) 
+            if oldData["sessionJobId"] and oldData["sessionJobId"] ~= game.JobId then warn(`[{self.Name} - {MDS.Product}] UpdateAsync cancelled as session is currently in-use on another server`) return nil end
             if self["Structure"] == oldData then print(`[{self.Name} - {MDS.Product}] Data remains unchanged. Save process aborted.`) return nil end
             print(`[{self.Name} - {MDS.Product}] Wrote changes to datastore`)
 
@@ -142,12 +145,19 @@ function Schema:Start(id)
 
         local _, data = self:Serialise(id):await()
         
+        if data["sessionJobId"] and data["sessionJobId"] ~= game.JobId then
+            warn(`[{self.Name} - {MDS.Product}] Datastore with ID {id} is locked as it's in use on another server`)
+            return reject(false)
+        end
+
         if data["version"] then 
             print(`[{self.Name} - {MDS.Product}] MDS v2 format detected. Converting to v3.`)
             data = data["data"]
         end
 
         self["Structure"] = data
+        self["Structure"]["sessionJobId"] = game.JobId or 0
+        self:SaveStore()
 
         return resolve(self)
     end)
@@ -156,6 +166,7 @@ end
 function Schema:Close(refuseSave)
     if refuseSave then return false end
     return Promise.new(function(resolve, reject, onCancel) 
+        self["Structure"]["sessionJobId"] = nil
         local status, _ = self:SaveStore():await()
         if not status then return reject(false) end
         return resolve(true)

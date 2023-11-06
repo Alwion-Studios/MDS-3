@@ -30,7 +30,7 @@ local MDS = {
     Product = `aDS`,
     Version = `{branch}_{main}.{update}.{milestone}.{iteration}`,
     Events = {
-        hasLoaded = Signal.new()
+        hasLoaded = Signal.new(),
     },
     Status = {
         hasInitialised = false
