@@ -32,7 +32,6 @@ local TableFunctions = require(script.Parent.Parent.Functions["Table.Functions"]
 local MDS = require(script.Parent.Parent.Core)
 local RunService = game:GetService("RunService")
 local Promise = require(RS.Packages.Promise)
-local TblUtil = require(RS.Packages.TableUtil)
 
 if RunService:IsStudio() then isStudio = true end
 
@@ -84,7 +83,7 @@ end
 function Schema:Sync(data, template) 
     return Promise.new(function(resolve, reject, onCancel) 
         if type(data) ~= "table" or type(template) ~= "table" then warn(`[{self.Name} - {MDS.Product}] provided paramater(s) are not tables`) end
-        return resolve(TblUtil.Reconcile(data, template))
+        return resolve(TableFunctions.Sync(data, template))
     end)
 end
 

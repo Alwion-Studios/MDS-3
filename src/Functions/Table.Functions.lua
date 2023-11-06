@@ -1,13 +1,12 @@
 local RS = game:GetService("ReplicatedStorage")
-local TblUtil = require(RS.Packages.TableUtil)
 
 local TableFunctions = {}
 
 function TableFunctions.FindAndEdit(path, data, key, value) 
-    local toReturn = TblUtil.Copy(data, true)
+    local toReturn = table.clone(data)
 
     local function scan(tbl) 
-        local scanReturn = TblUtil.Copy(tbl, true)
+        local scanReturn = table.clone(tbl)
 
         for scannedName, _ in tbl do 
             local source = tbl[scannedName]
@@ -27,6 +26,37 @@ function TableFunctions.FindAndEdit(path, data, key, value)
         end
     end
     scan(toReturn)
+
+    return toReturn
+end
+
+function TableFunctions.DeepCopy(t)
+    local copy = table.clone(t)
+    for name, value in copy do 
+        if type(value) == "table" then copy[name] = TableFunctions.DeepCopy(value) end
+    end
+    return copy
+end
+
+function TableFunctions.Sync(data, template) 
+    local toReturn = table.clone(data)
+
+    for name, value in template do
+		local source = data[name]
+		if source == nil then
+			if type(value) == "table" then
+				toReturn[name] = TableFunctions.DeepCopy(value)
+			else
+				toReturn[name] = value
+			end
+		elseif type(source) == "table" then
+			if type(value) == "table" then
+				toReturn[name] = TableFunctions.Sync(source, value)
+			else
+				toReturn[name] = TableFunctions.DeepCopy(source)
+			end
+		end
+	end
 
     return toReturn
 end
