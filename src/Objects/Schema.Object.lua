@@ -60,14 +60,19 @@ function Schema:Serialise()
 
     return Promise.new(function(resolve, reject, onCancel) 
         local result = self.DataStore:GetAsync(self.Id)
-        result = self:Sync(result, self["Structure"]):await()
+        local toReturn
 
-        if not result or type(result) ~= "table" then 
+        if not result then 
             self.DataStore:SetAsync(self.Id, self["Structure"])
             result = self["Structure"]
+            toReturn = result
         end
 
-        resolve(result)
+        if not toReturn then
+            _, toReturn = self:Sync(result, self["Structure"]):await()
+        end
+        
+        resolve(toReturn)
 
         onCancel(function() 
             resolve(false)
@@ -79,23 +84,7 @@ end
 function Schema:Sync(data, template) 
     return Promise.new(function(resolve, reject, onCancel) 
         if type(data) ~= "table" or type(template) ~= "table" then warn(`[{self.Name} - {MDS.Product}] provided paramater(s) are not tables`) end
-        local toReturn = table.clone(data)
-
-        for name, value in template do 
-            local source = data[name]
-            if source ~= nil and type(source) ~= "table" then continue end
-
-            if type(source) == "table" then 
-                if type(value) ~= "table" then TblUtil.Copy(source, true) continue end    
-                toReturn[name] = self:Sync(source, value)
-                continue
-            end
-
-            if type(value) ~= "table" then TblUtil.Copy(source, true) continue end    
-            toReturn[name] = value
-        end
-
-        return resolve(toReturn)
+        return resolve(TblUtil.Reconcile(data, template))
     end)
 end
 
@@ -147,7 +136,7 @@ function Schema:CreateSession(id)
         self.Id = id
 
         local _, data = self:Serialise(id):await()
-
+        
         if data["version"] then 
             print(`[{self.Name} - {MDS.Product}] MDS v2 format detected. Converting to v3.`)
             data = data["data"]
