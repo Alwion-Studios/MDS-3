@@ -121,7 +121,7 @@ function Schema:DeleteStore()
     end)
 end
 
-function Schema:SaveStore(structure)
+function Schema:SaveStore()
     if not self.Id then return false end
 
     return Promise.new(function(resolve, reject, onCancel) 
