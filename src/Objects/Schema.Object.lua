@@ -29,7 +29,7 @@ local DS = game:GetService("DataStoreService")
 local RS = game:GetService("ReplicatedStorage")
 local PS = game:GetService("Players")
 local TableFunctions = require(script.Parent.Parent.Functions["Table.Functions"])
-local MDS = require(script.Parent.Parent.Core)
+local Core = require(script.Parent.Parent.Core)
 local RunService = game:GetService("RunService")
 local Promise = require(RS.Packages.Promise)
 
@@ -84,7 +84,7 @@ end
 --Sync Functions
 function Schema:Sync(data, template) 
     return Promise.new(function(resolve, reject, onCancel) 
-        if type(data) ~= "table" or type(template) ~= "table" then warn(`[{self.Name} - {MDS.Product}] provided paramater(s) are not tables`) end
+        if type(data) ~= "table" or type(template) ~= "table" then warn(`[{self.Name} - {Core.Product}] provided paramater(s) are not tables`) end
         return resolve(TableFunctions.Sync(data, template))
     end)
 end
@@ -94,6 +94,7 @@ function Schema:SetKey(path, key, value)
     return Promise.new(function(resolve, reject, onCancel) 
         self.IsLocked = true
         self.Structure = TableFunctions.FindAndEdit(path, self.Structure, key, value) 
+        Core.Events.KeyChanged:Fire(self.Id, key, value)
         return resolve(true)
     end)
 end
@@ -107,13 +108,13 @@ end
 -- Datastore Functions
 function Schema:Delete()
     if not self.Id then return false end
-    warn(`[{self.Name} - {MDS.Product}] Deleting Datastore with ID {self.Id}`)
+    warn(`[{self.Name} - {Core.Product}] Deleting Datastore with ID {self.Id}`)
 
     return Promise.new(function(resolve, reject, onCancel) 
         self.DataStore:RemoveAsync(self.Id)
         --self:RefreshCache()
-        warn(`[{self.Name} - {MDS.Product}] Closing Session`)
-        MDS:CloseSession(self.Id, self.Name)
+        warn(`[{self.Name} - {Core.Product}] Closing Session`)
+        Core:CloseSession(self.Id, self.Name)
         
         onCancel(function() 
             resolve(false)
@@ -137,20 +138,20 @@ function Schema:Save()
             end
 
             if not oldData["Metadata"] then 
-                warn(`[{self.Name} - {MDS.Product}] No metadata detected - saving`)
+                warn(`[{self.Name} - {Core.Product}] No metadata detected - saving`)
                 return toSave 
             end
 
             if oldData["Metadata"]["Session"][1] ~= game.PlaceId or oldData["Metadata"]["Session"][2] ~= game.JobId and (oldData["Metadated"]["LastModified"] - currentUTCTime) < self.assumeDeadSessionLock then 
-                warn(`[{self.Name} - {MDS.Product}] UpdateAsync cancelled as session is currently in-use on another server`) return nil 
+                warn(`[{self.Name} - {Core.Product}] UpdateAsync cancelled as session is currently in-use on another server`) return nil 
             end
 
             if toSave == oldData then
-                warn(`[{self.Name} - {MDS.Product}] Data remains unchanged. Save process aborted.`) 
+                warn(`[{self.Name} - {Core.Product}] Data remains unchanged. Save process aborted.`) 
                 return nil 
             end
 
-            print(`[{self.Name} - {MDS.Product}] Wrote changes to datastore`)
+            print(`[{self.Name} - {Core.Product}] Wrote changes to datastore`)
 
             if toSave["Metadata"] then
                 toSave["Metadata"]["LastModified"] = currentUTCTime
@@ -168,7 +169,7 @@ end
 
 --Session Code
 function Schema:Start(id) 
-    if self.Id then warn(`[{self.Name} - {MDS.Product}] Session is currently active`) return false end
+    if self.Id then warn(`[{self.Name} - {Core.Product}] Session is currently active`) return false end
 
     return Promise.new(function(resolve, reject, onCancel) 
         self.Id = id
@@ -181,12 +182,12 @@ function Schema:Start(id)
         end
 
         if data["Metadata"] and data["Metadata"]["Session"][1] ~= game.PlaceId or data["Metadata"]["Session"][2] ~= game.JobId then
-            warn(`[{self.Name} - {MDS.Product}] Datastore with ID {id} is locked as it's in use on another server`)
+            warn(`[{self.Name} - {Core.Product}] Datastore with ID {id} is locked as it's in use on another server`)
             return reject(false)
         end
 
         if data["version"] then 
-            print(`[{self.Name} - {MDS.Product}] MDS v2 format detected. Converting to v3.`)
+            print(`[{self.Name} - {Core.Product}] Core v2 format detected. Converting to v3.`)
             data = data["data"]
         end
 

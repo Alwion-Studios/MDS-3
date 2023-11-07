@@ -31,6 +31,7 @@ local MDS = {
     Version = `{branch}_{main}.{update}.{milestone}.{iteration}`,
     Events = {
         hasLoaded = Signal.new(),
+        KeyChanged = Signal.new()
     },
     Status = {
         hasInitialised = false

@@ -19,6 +19,12 @@ PS.PlayerAdded:Connect(function(plr)
 
     print(`Loaded Session for {plr.Name}`)
     print(session)
-    --session:SetCoins(10) 
+
+    MDS.Events.KeyChanged:Connect(function(id, key, value) 
+        print(`Value changed! {id} {key} to {value}`)
+    end)
+
+    wait(1)
+    session:SetCoins(10) 
     --session:DeleteStore()
 end)
