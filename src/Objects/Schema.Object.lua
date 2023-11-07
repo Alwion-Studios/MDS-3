@@ -200,6 +200,7 @@ function Schema:Start(id)
         self:Save()
         self["Structure"]["Metadata"] = nil
 
+        Core.Events.SessionOpen:Fire(self.Id) --Fire the SessionOpen Signal
         return resolve(self)
     end)
 end
@@ -210,7 +211,10 @@ function Schema:Close(refuseSave)
     return Promise.new(function(resolve, reject, onCancel) 
         self["Metadata"] = nil
         local status, _ = self:Save():await()
-        if not status then return reject(false) end
+        if not status then return resolve(false) end
+
+        Core.Events.SessionClosed:Fire(self.Id) --Fire the SessionClosed Signal
+
         return resolve(true)
     end)
 end
