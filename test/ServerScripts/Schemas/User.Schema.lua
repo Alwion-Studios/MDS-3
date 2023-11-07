@@ -18,11 +18,16 @@ local level: Table = {
 local stats: Table = {
     ["Level"]=level
 }
+local moderation: Table = {
+    ["Bans"]={},
+    ["Warns"]={}
+}
 
 TestSchema = Schema.Create("UserTest", 
     {
         ["Stats"]=stats, 
-        ["Inventory"]=inventory
+        ["Inventory"]=inventory,
+        ["Moderation"]=moderation
     }
 )
 
