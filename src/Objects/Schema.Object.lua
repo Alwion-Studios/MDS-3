@@ -41,14 +41,12 @@ local Schema = {
         autoSaveInteral = 1 * 60,
     }
 }
-Schema.__index = Schema
 
 function Schema.Create(name, structure, config): Schema
-    local self = setmetatable({
-        Name = name,
-        Structure = structure,
-        DataStore = DS:GetDataStore(`{name}-{datastoreNamePrefix[isStudio]}`),
-    }, Schema)
+    local self = Schema
+    self.Name = name
+    self.Structure = structure
+    self.DataStore = DS:GetDataStore(`{name}-{datastoreNamePrefix[isStudio]}`)
 
     if config then 
         for settingName, value in config do 

@@ -15,8 +15,12 @@ local level: Table = {
     ["Level"]=1,
     ["Experience"]=0,
 }
+local perks: Table = {
+    
+}
 local stats: Table = {
-    ["Level"]=level
+    ["Level"]=level,
+    ["Perks"]=perks
 }
 local moderation: Table = {
     ["Bans"]={},
