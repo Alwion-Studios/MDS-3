@@ -131,19 +131,32 @@ function Schema:Save()
             local toSave = {}
 
             toSave = self["Structure"] 
-            toSave["Metadata"] = self["Metadata"]
 
-            if not oldData["Metadata"] then return toSave end
+            if self["Metadata"] then
+                toSave["Metadata"] = self["Metadata"]
+            end
+
+            if not oldData["Metadata"] then 
+                warn(`[{self.Name} - {MDS.Product}] No metadata detected - saving`)
+                return toSave 
+            end
 
             if oldData["Metadata"]["Session"][1] ~= game.PlaceId or oldData["Metadata"]["Session"][2] ~= game.JobId and (oldData["Metadated"]["LastModified"] - currentUTCTime) < self.assumeDeadSessionLock then 
                 warn(`[{self.Name} - {MDS.Product}] UpdateAsync cancelled as session is currently in-use on another server`) return nil 
             end
 
-            if toSave == oldData then warn(`[{self.Name} - {MDS.Product}] Data remains unchanged. Save process aborted.`) return nil end
+            if toSave == oldData then
+                warn(`[{self.Name} - {MDS.Product}] Data remains unchanged. Save process aborted.`) 
+                return nil 
+            end
+
             print(`[{self.Name} - {MDS.Product}] Wrote changes to datastore`)
 
-            toSave["Metadata"]["LastModified"] = currentUTCTime
-            self["Metadata"]["LastModified"] = currentUTCTime
+            if toSave["Metadata"] then
+                toSave["Metadata"]["LastModified"] = currentUTCTime
+                self["Metadata"]["LastModified"] = currentUTCTime
+            end
+
             return toSave
         end)
 
@@ -191,8 +204,8 @@ end
 function Schema:Close(refuseSave)
     if refuseSave then return false end
     return Promise.new(function(resolve, reject, onCancel) 
-        self["Structure"]["sessionJobId"] = nil
-        local status, _ = self:SaveStore():await()
+        self["Metadata"] = nil
+        local status, _ = self:Save():await()
         if not status then return reject(false) end
         return resolve(true)
     end)
