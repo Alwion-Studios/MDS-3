@@ -168,6 +168,8 @@ end
 
 --Session Code
 function Schema:Start(id) 
+    if self.Id then warn(`[{self.Name} - {MDS.Product}] Session is currently active`) return false end
+
     return Promise.new(function(resolve, reject, onCancel) 
         self.Id = id
 
@@ -203,6 +205,7 @@ end
 
 function Schema:Close(refuseSave)
     if refuseSave then return false end
+    
     return Promise.new(function(resolve, reject, onCancel) 
         self["Metadata"] = nil
         local status, _ = self:Save():await()
