@@ -105,7 +105,7 @@ function Schema:GetKey(path, key)
 end
 
 -- Datastore Functions
-function Schema:DeleteStore()
+function Schema:Delete()
     if not self.Id then return false end
     warn(`[{self.Name} - {MDS.Product}] Deleting Datastore with ID {self.Id}`)
 
@@ -121,7 +121,7 @@ function Schema:DeleteStore()
     end)
 end
 
-function Schema:SaveStore()
+function Schema:Save()
     if not self.Id then return false end
 
     return Promise.new(function(resolve, reject, onCancel) 
@@ -181,7 +181,7 @@ function Schema:Start(id)
         --self["Structure"]["Metadata"] = {}
         --self["Structure"]["Metadata"]["Session"] = {game.PlaceId, game.JobId or 0}
         
-        self:SaveStore()
+        self:Save()
         self["Structure"]["Metadata"] = nil
 
         return resolve(self)
