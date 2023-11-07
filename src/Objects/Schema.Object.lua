@@ -125,7 +125,9 @@ function Schema:SaveStore(structure)
     if not self.Id then return false end
 
     return Promise.new(function(resolve, reject, onCancel) 
-        self.DataStore:UpdateAsync(self.Id, function(oldData) 
+        self.DataStore:UpdateAsync(self.Id, function(oldData)
+            local currentUTCTime = os.time(os.date("!*t"))
+
             local toSave = {}
 
             toSave = self["Structure"] 
@@ -133,10 +135,15 @@ function Schema:SaveStore(structure)
 
             if not oldData["Metadata"] then return toSave end
 
-            if oldData["Metadata"] and oldData["Metadata"]["Session"][1] ~= game.PlaceId or oldData["Metadata"]["Session"][2] ~= game.JobId then warn(`[{self.Name} - {MDS.Product}] UpdateAsync cancelled as session is currently in-use on another server`) return nil end
+            if oldData["Metadata"]["Session"][1] ~= game.PlaceId or oldData["Metadata"]["Session"][2] ~= game.JobId and (oldData["Metadated"]["LastModified"] - currentUTCTime) < self.assumeDeadSessionLock then 
+                warn(`[{self.Name} - {MDS.Product}] UpdateAsync cancelled as session is currently in-use on another server`) return nil 
+            end
+
             if toSave == oldData then warn(`[{self.Name} - {MDS.Product}] Data remains unchanged. Save process aborted.`) return nil end
             print(`[{self.Name} - {MDS.Product}] Wrote changes to datastore`)
 
+            toSave["Metadata"]["LastModified"] = currentUTCTime
+            self["Metadata"]["LastModified"] = currentUTCTime
             return toSave
         end)
 
