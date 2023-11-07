@@ -36,19 +36,27 @@ local Promise = require(RS.Packages.Promise)
 if RunService:IsStudio() then isStudio = true end
 
 local Schema = {
-    assumeDeadSessionLock = 30 * 60,
-    autoSaveIteral = 30,
-    isLocked = false,
-    dataQueue = {}
+    Settings = {
+        assumeDeadSessionLock = 30 * 60,
+        autoSaveInteral = 1 * 60,
+    }
 }
 Schema.__index = Schema
 
-function Schema.Create(name, structure, opts): Schema
-    return setmetatable({
+function Schema.Create(name, structure, config): Schema
+    local self = setmetatable({
         Name = name,
         Structure = structure,
-        DataStore = DS:GetDataStore(`{name}-{datastoreNamePrefix[isStudio]}`)
+        DataStore = DS:GetDataStore(`{name}-{datastoreNamePrefix[isStudio]}`),
     }, Schema)
+
+    if config then 
+        for settingName, value in config do 
+            self.Settings[settingName] = value
+        end
+    end
+
+    return self
 end
 
 --Session Serialisation Functions
@@ -78,6 +86,13 @@ function Schema:Serialise()
         onCancel(function() 
             resolve(false)
         end)
+    end)
+end
+
+--Session Settings
+function Schema:GetSettings()
+    return Promise.new(function(resolve) 
+        return resolve(self.Settings)
     end)
 end
 
@@ -142,7 +157,7 @@ function Schema:Save()
                 return toSave 
             end
 
-            if oldData["Metadata"]["Session"][1] ~= game.PlaceId or oldData["Metadata"]["Session"][2] ~= game.JobId and (oldData["Metadated"]["LastModified"] - currentUTCTime) < self.assumeDeadSessionLock then 
+            if oldData["Metadata"]["Session"][1] ~= game.PlaceId or oldData["Metadata"]["Session"][2] ~= game.JobId and (oldData["Metadated"]["LastModified"] - currentUTCTime) < self.Settings.assumeDeadSessionLock then 
                 warn(`[{self.Name} - {Core.Product}] UpdateAsync cancelled as session is currently in-use on another server`) return nil 
             end
 
@@ -194,9 +209,6 @@ function Schema:Start(id)
         self["Metadata"] = data["Metadata"]
         self["Structure"] = data
 
-        --self["Structure"]["Metadata"] = {}
-        --self["Structure"]["Metadata"]["Session"] = {game.PlaceId, game.JobId or 0}
-        
         self:Save()
         self["Structure"]["Metadata"] = nil
 

@@ -28,7 +28,7 @@ TestSchema = Schema.Create("UserTest",
         ["Stats"]=stats, 
         ["Inventory"]=inventory,
         ["Moderation"]=moderation
-    }
+    }, {["DataValues"]={true, "UserData"}}
 )
 
 function TestSchema:SetCoins(toAdd) 

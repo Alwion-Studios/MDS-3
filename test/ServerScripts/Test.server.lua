@@ -26,5 +26,10 @@ PS.PlayerAdded:Connect(function(plr)
 
     wait(1)
     session:SetCoins(10) 
+
+    session:GetSettings():andThen(function(res) 
+        print(res)
+    end)
+
     --session:DeleteStore()
 end)
