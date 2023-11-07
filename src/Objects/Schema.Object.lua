@@ -58,10 +58,6 @@ function Schema.Create(name, structure, config): Schema
 end
 
 --Session Serialisation Functions
-function Schema:GetStructure()
-    return self["Structure"]
-end
-
 function Schema:Serialise()
     if not self.Id then return false end
 

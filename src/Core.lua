@@ -90,7 +90,7 @@ function Core:CloseSession(id, session): Promise
     return Promise.resolve(true)
 end
 
-function Core:CloseSessions(): Promise
+function Core:Shutdown(): Promise
     print(`[{self.Product}] Closing Sessions`)
 
     for name, schema in pairs(self.ActiveSessions) do 
@@ -105,7 +105,7 @@ function Core:CloseSessions(): Promise
 end
 
 game:BindToClose(function() 
-    Core:CloseSessions():await()
+    Core:Shutdown():await()
 end)
 
 return Core
