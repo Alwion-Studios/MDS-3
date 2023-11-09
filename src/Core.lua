@@ -4,7 +4,7 @@
 local main = 3
 local update = 0
 local milestone = 1
-local iteration = 1
+local iteration = 2
 local branch = "tb"
 
 --Imports
@@ -14,13 +14,6 @@ local Promise = require(RS.Packages.Promise)
 local Signal = require(RS.Packages.Signal)
 
 -- Object Types
---Middleware Types
-export type Middleware = {
-    Inbound: {MiddleWareFn}?,
-    Outbound: {MiddleWareFn}?
-}
-
-export type MFunction = (player: Player, args: {any}) -> (boolean, ...any)
 
 --Schema Type
 export type Schema = {
@@ -29,8 +22,7 @@ export type Schema = {
     Settings: table,
     DataStore: DataStore,
     Structure: table,
-    Options: table,
-    Middleware: Middleware
+    Options: table
 }
 
 --Promise Type
@@ -97,19 +89,12 @@ function Core:GetSession(id, name): Promise
     return Promise.resolve(self.ActiveSessions[name][id])
 end
 
-function Core:CloseSession(id, session): Promise
-    local status, _ = session:Close()
-    if not status then warn(`[{self.Product}] Session ({id}) did not successfully save`) end
-
-    return Promise.resolve(true)
-end
-
 function Core:Shutdown(): Promise
     print(`[{self.Product}] Closing Sessions`)
 
     for name, schema in pairs(self.ActiveSessions) do 
         for id, session in pairs(schema) do 
-            self:CloseSession(id, session)
+            session:Close()
             session = nil
             print(`[{self.Product}] Closed Serialised Schema ({name}) Session ({id})`)
         end 

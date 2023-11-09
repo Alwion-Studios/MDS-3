@@ -85,7 +85,7 @@ local function Find(path, data, key)
         return false
     end
 
-    return scan(data)
+    return {key, scan(data)}
 end
 
 TableFunctions.DeepCopy = DeepCopy
