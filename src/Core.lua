@@ -14,12 +14,23 @@ local Promise = require(RS.Packages.Promise)
 local Signal = require(RS.Packages.Signal)
 
 -- Object Types
+--Middleware Types
+export type Middleware = {
+    Inbound: {MiddleWareFn}?,
+    Outbound: {MiddleWareFn}?
+}
+
+export type MFunction = (player: Player, args: {any}) -> (boolean, ...any)
+
+--Schema Type
 export type Schema = {
     Name: String,
-    AutoSaveInterval: Number,
+    Id: Number,
+    Settings: table,
     DataStore: DataStore,
-    Session: table,
-    Options: table
+    Structure: table,
+    Options: table,
+    Middleware: Middleware
 }
 
 --Promise Type
