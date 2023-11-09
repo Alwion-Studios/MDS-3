@@ -181,8 +181,7 @@ end
 
     -- Parameters
     path: table ! Defines the path to find or insert a key ! - !!! Does not work if you use keys that do not exist. Patch coming soon !!!
-    key: string ! Name of key to set !
-    value: any ! Value to set key to !
+    key: string ! Name of key to find !
 
     -- Example:
     self:GetKey({"Path", "to", "key"}, "Key")
