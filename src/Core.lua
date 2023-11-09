@@ -55,21 +55,24 @@ local Core = {
     }, -- Alwion Only
 }
 
-function Core.Initialise(directory: Instance)
+function Core.Initialise(directory: Instance): Promise
+    if Core.Status.hasInitialised then return Promise.reject() end 
     print(`👋 {game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name} is supported by {Core.Product} ({Core.Version})`)
 
-    for _, schema in pairs(directory:GetChildren()) do 
-        local reqSchema = require(schema)
-
-        Core.Schemas[reqSchema.Name] = reqSchema
-        Core.ActiveSessions[reqSchema.Name] = {}
-
-        print(`[{Core.Product}] Initialised {reqSchema.Name}`)
-    end
-
-    Core.Status.hasInitialised = true
-    Core.Events.hasLoaded:Fire()
-    return true
+    return Promise.new(function(resolve) 
+        for _, schema in pairs(directory:GetChildren()) do 
+            local reqSchema = require(schema)
+    
+            Core.Schemas[reqSchema.Name] = reqSchema
+            Core.ActiveSessions[reqSchema.Name] = {}
+    
+            print(`[{Core.Product}] Initialised {reqSchema.Name}`)
+        end
+    
+        Core.Status.hasInitialised = true
+        Core.Events.hasLoaded:Fire()
+        resolve(true)
+    end)
 end
 
 function Core:GetSchema(name): Promise
