@@ -1,18 +1,50 @@
 local SS = game:GetService("ServerScriptService")
 local Schema = require(SS.MDS.Objects["Schema.Object"])
+local RS = game:GetService("ReplicatedStorage")
+local Promise = require(RS.Packages.Promise)
 
-local TestSchema = Schema.Create("UserTest", 
+local TestSchema: Schema = {}
+
+--Data Components
+local inventory: Table = {
+    ["Cash"]=0,
+    ["Tokens"]=0,
+    ["Backpack"]={}
+}
+local level: Table = {
+    ["Level"]=1,
+    ["Experience"]=0,
+}
+local perks: Table = {
+    
+}
+local stats: Table = {
+    ["Level"]=level,
+    ["Perks"]=perks
+}
+local moderation: Table = {
+    ["Bans"]={},
+    ["Warns"]={}
+}
+
+TestSchema = Schema.Create("UserTest", 
     {
-        ["Stats"]={
-            ["Cash"]=0,
-            ["Tokens"]=0,
-            ["Experience"]={
-                ["Level"]=1,
-                ["Experience"]=0
-            }
-        }, 
-        ["Inventory"]={}
-    }
+        ["Stats"]=stats, 
+        ["Inventory"]=inventory,
+        ["Moderation"]=moderation
+    }, {["DataValues"]={true, "UserData"}}
 )
+
+function TestSchema:SetCoins(toAdd) 
+    if not self.Id then return false end
+
+    --Get the User's current cash value
+    self:GetKey({"Inventory"}, "Cash"):andThen(function(res) 
+        if not typeof(res) == "number" then return false end
+        res += toAdd
+        --Set the cash key to the new value
+        self:SetKey({"Inventory"}, "Cash", res):await()
+    end)
+end
 
 return TestSchema

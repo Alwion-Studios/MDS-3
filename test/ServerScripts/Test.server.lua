@@ -12,12 +12,24 @@ PS.PlayerAdded:Connect(function(plr)
     local loaded, session, _ = MDS:GetSchema("UserTest"):andThen(function(schema) 
         local status, createdSession = MDS:CreateSession(plr.UserId, schema):await()
         
-        if not status then plr:Kick("Failed to initialise a datastore session!") end
+        if not status then plr:Kick("Failed to initialise a datastore session!") return Promise.reject(false) end
 
         return Promise.resolve(createdSession)
     end):await()
 
     print(`Loaded Session for {plr.Name}`)
     print(session)
-    session:Save()
+
+    MDS.Events.KeyChanged:Connect(function(id, key, value) 
+        print(`Value changed! {id} {key} to {value}`)
+    end)
+
+    wait(1)
+    session:SetCoins(10) 
+
+    session:GetSettings():andThen(function(res) 
+        print(res)
+    end)
+
+    --session:DeleteStore()
 end)

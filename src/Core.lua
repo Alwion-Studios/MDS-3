@@ -3,8 +3,8 @@
 --VERSION
 local main = 3
 local update = 0
-local milestone = 0
-local iteration = 5
+local milestone = 1
+local iteration = 1
 local branch = "tb"
 
 --Imports
@@ -14,62 +14,79 @@ local Promise = require(RS.Packages.Promise)
 local Signal = require(RS.Packages.Signal)
 
 -- Object Types
+--Middleware Types
+export type Middleware = {
+    Inbound: {MiddleWareFn}?,
+    Outbound: {MiddleWareFn}?
+}
+
+export type MFunction = (player: Player, args: {any}) -> (boolean, ...any)
+
+--Schema Type
 export type Schema = {
     Name: String,
-    AutoSaveInterval: Number,
+    Id: Number,
+    Settings: table,
     DataStore: DataStore,
-    Session: table,
-    Options: table
+    Structure: table,
+    Options: table,
+    Middleware: Middleware
 }
 
 --Promise Type
 export type Promise = typeof(Promise.new(function() end))
 
-local MDS = {
+local Core = {
     Schemas = {},
     Product = `aDS`,
     Version = `{branch}_{main}.{update}.{milestone}.{iteration}`,
     Events = {
-        hasLoaded = Signal.new()
+        hasLoaded = Signal.new(),
+        KeyChanged = Signal.new(),
+        SessionOpen = Signal.new(),
+        SessionClosed = Signal.new()
     },
     Status = {
         hasInitialised = false
     },
-    ActiveSessions = {}
+    ActiveSessions = {},
+    Debug = {
+        PerformanceCheck = true,
+    }, -- Alwion Only
 }
 
-function MDS.Initialise(directory: Instance)
-    print(`👋 {game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name} is supported by {MDS.Product} ({MDS.Version})`)
+function Core.Initialise(directory: Instance)
+    print(`👋 {game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name} is supported by {Core.Product} ({Core.Version})`)
 
     for _, schema in pairs(directory:GetChildren()) do 
         local reqSchema = require(schema)
 
-        MDS.Schemas[reqSchema.Name] = reqSchema
-        MDS.ActiveSessions[reqSchema.Name] = {}
+        Core.Schemas[reqSchema.Name] = reqSchema
+        Core.ActiveSessions[reqSchema.Name] = {}
 
-        print(`[{MDS.Product}] Initialised {reqSchema.Name}`)
+        print(`[{Core.Product}] Initialised {reqSchema.Name}`)
     end
 
-    MDS.Status.hasInitialised = true
-    MDS.Events.hasLoaded:Fire()
+    Core.Status.hasInitialised = true
+    Core.Events.hasLoaded:Fire()
     return true
 end
 
-function MDS:GetSchema(name): Promise
+function Core:GetSchema(name): Promise
     return Promise.resolve(self.Schemas[name])
 end
 
 --Session Code
-function MDS:CreateSession(id, schema: Schema): Promise
+function Core:CreateSession(id, schema: Schema): Promise
     if not schema or not id or not PS:GetPlayerByUserId(id) then return Promise.reject(false) end
     
-    local status, newSession = schema:CreateSession(id):await()
+    local status, newSession = schema:Start(id):await()
     self.ActiveSessions[schema.Name][id] = newSession
 
     return Promise.resolve(newSession)
 end
 
-function MDS:GetSession(id, name): Promise 
+function Core:GetSession(id, name): Promise 
     if not id or not name then return Promise.reject(false) end
     if not self.ActiveSessions[name] then return Promise.reject(false) end
     if not self.ActiveSessions[name][id] then return Promise.reject(false) end
@@ -77,15 +94,21 @@ function MDS:GetSession(id, name): Promise
     return Promise.resolve(self.ActiveSessions[name][id])
 end
 
-function MDS:CloseSessions(): Promise
+function Core:CloseSession(id, session): Promise
+    local status, _ = session:Close()
+    if not status then warn(`[{self.Product}] Session ({id}) did not successfully save`) end
+
+    return Promise.resolve(true)
+end
+
+function Core:Shutdown(): Promise
     print(`[{self.Product}] Closing Sessions`)
 
     for name, schema in pairs(self.ActiveSessions) do 
         for id, session in pairs(schema) do 
-            print(`[{self.Product}] Closing Schema ({name}) Session ({id})`)
-            local status, _ = session:CloseSession()
-            if not status then warn(`[{self.Product}] Session ({id}) did not successfully save`) end
+            self:CloseSession(id, session)
             session = nil
+            print(`[{self.Product}] Closed Serialised Schema ({name}) Session ({id})`)
         end 
     end
 
@@ -93,7 +116,7 @@ function MDS:CloseSessions(): Promise
 end
 
 game:BindToClose(function() 
-    MDS:CloseSessions():await()
+    Core:Shutdown():await()
 end)
 
-return MDS
+return Core
