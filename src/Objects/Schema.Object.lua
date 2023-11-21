@@ -165,10 +165,9 @@ end
     self:SetKey({"Path", "to", "table"}, "Key", "Value")
 ]]
 
-function Schema:SetKey(path, key, value)
+function Schema:SetKey(key, value)
     return Promise.new(function(resolve, reject, onCancel) 
-        self.IsLocked = true
-        self.Structure = TableFunctions.FindAndEdit(path, self.Structure, key, value) 
+        self.Structure = TableFunctions.FindAndEdit(self.Structure, key, value) 
         Core.Events.KeyChanged:Fire(self.Id, key, value)
         return resolve(true)
     end)
@@ -180,16 +179,16 @@ end
     This function allows you to get a key and its value based on its path in the data structure
 
     -- Parameters
-    path: table ! Defines the path to find or insert a key ! - !!! Does not work if you use keys that do not exist. Patch coming soon !!!
+    path: table ! Defines the path to find the key ! - !!! Does not work if you use keys that do not exist. Patch coming soon !!!
     key: string ! Name of key to find !
 
     -- Example:
     self:GetKey({"Path", "to", "key"}, "Key")
 ]]
 
-function Schema:GetKey(path, key)
+function Schema:GetKey(key)
     return Promise.new(function(resolve, reject, onCancel) 
-        return resolve(TableFunctions.Find(path, self.Structure, key))
+        return resolve(TableFunctions.Find(self.Structure, key))
     end)
 end
 
@@ -210,16 +209,16 @@ end
 
 function Schema:Delete(id)
     if not self.Id or not id then return false end
-    local idToUse = self.Id or id
-    warn(`[{self.Name} - {Core.Product}] Deleting Datastore with ID {self.Id}`)
+
+    warn(`[{self.Name} - {Core.Product}] Deleting Datastore with ID {id or self.Id}`)
 
     return Promise.new(function(resolve, reject, onCancel) 
-        self.DataStore:RemoveAsync(idToUse)
+        self.DataStore:RemoveAsync(id or self.Id)
         --self:RefreshCache()
 
         if self.Id then
             warn(`[{self.Name} - {Core.Product}] Closing Session`)
-            Core:CloseSession(idToUse, self.Name)
+            Core:CloseSession(id or self.Id, self.Name)
         end
         
         onCancel(function() 

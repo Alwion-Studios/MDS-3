@@ -1,31 +1,18 @@
 local RS = game:GetService("ReplicatedStorage")
+local Promise = require(RS.Packages.Promise)
 
 local TableFunctions = {}
 
-local function FindAndEdit(path, data, key, value) 
+--Promise Type
+export type Promise = typeof(Promise.new(function() end))
+
+local function FindAndEdit(data, key, value) 
     local toReturn = table.clone(data)
 
-    local function scan(tbl) 
-        local scanReturn = table.clone(tbl)
-
-        for scannedName, _ in tbl do 
-            local source = tbl[scannedName]
-
-            if source[key] then 
-               -- print(`{key} Found`)
-                source[key] = value
-                --print(`{key} Set to {value}`)
-                return true
-            end
-
-            for _, directory in path do 
-                if source[directory] and type(source[directory]) == "table" then 
-                    scanReturn[scannedName] = scan(source)
-                end
-            end
-        end
+    for name, keyValue in toReturn do 
+        if name == key then toReturn[name] = value return true end
+        if typeof(value) == "table" then return FindAndEdit(keyValue, key, value) end
     end
-    scan(toReturn)
 
     return toReturn
 end
@@ -65,27 +52,15 @@ local function Sync(data, template)
     return toReturn
 end
 
-local function Find(path, data, key) 
-    local function scan(tbl) 
-        for scannedName, _ in tbl do 
-            local source = tbl[scannedName]
+local function Find(data, key) 
+    local toReturn = table.clone(data)
 
-            if source[key] then 
-                --print(`{key} Found`)
-                return source[key]
-            end
-
-            for _, directory in path do 
-                if source[directory] and type(source[directory]) == "table" then 
-                    tbl[scannedName] = scan(source)
-                end
-            end
-        end
-
-        return false
+    for name, value in toReturn do 
+        if name == key then return toReturn[name]
+        elseif typeof(value) == "table" then return Find(value, key) end
     end
 
-    return {key, scan(data)}
+    return toReturn
 end
 
 TableFunctions.DeepCopy = DeepCopy

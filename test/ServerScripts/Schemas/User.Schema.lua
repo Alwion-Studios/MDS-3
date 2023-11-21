@@ -39,11 +39,11 @@ function TestSchema:SetCoins(toAdd)
     if not self.Id then return false end
 
     --Get the User's current cash value
-    self:GetKey({"Inventory"}, "Cash"):andThen(function(res) 
-        if not typeof(res) == "number" then return false end
+    self:GetKey("Cash"):andThen(function(res) 
+        if typeof(res) ~= "number" then return Promise.resolve(false) end
         res += toAdd
         --Set the cash key to the new value
-        self:SetKey({"Inventory"}, "Cash", res):await()
+        self:SetKey("Cash", res):await()
     end)
 end
 
