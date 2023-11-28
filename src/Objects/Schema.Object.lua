@@ -1,16 +1,26 @@
 --Operator Variables
 local isStudio = false
 --Types
+export type settings = {
+    assumeDeadSessionLock: number,
+    autoSaveInteral: number
+}
+
 export type Schema = {
     Name: String,
-    AutoSaveInterval: Number,
+    Settings: settings,
     DataStore: DataStore,
     Structure: table,
     Options: table,
-
-    --Booleans
-    IsResetting: boolean
 }
+
+--Middleware Types
+export type Middleware = {
+    Inbound: {MiddleWareFn}?,
+    Outbound: {MiddleWareFn}?
+}
+
+export type MFunction = (player: Player, args: {any}) -> (boolean, ...any)
 
 -- Variable Types to DataValues
 local dataTypes = {
@@ -35,29 +45,67 @@ local Promise = require(RS.Packages.Promise)
 
 if RunService:IsStudio() then isStudio = true end
 
+--Schema Object with Defaults
 local Schema = {
-    Settings = {
-        assumeDeadSessionLock = 30 * 60,
-        autoSaveInteral = 1 * 60,
+    Options = {
+        Settings = {
+            assumeDeadSessionLock = 30 * 60,
+            autoSaveInteral = 1 * 60,
+        },
+
+        --[[
+        FOR FUTURE USE -MK
+        Middleware = {
+            Inbound = {},
+            Outbound = {}
+        }]]
     }
 }
 
-function Schema.Create(name, structure, config): Schema
+--[[
+    Returns: SELF
+
+Gets the default schema template and adds the user's customisations
+    !!! Must be created before calling Core initialisation !!!
+
+    -- Parameters:
+    name: String -- Declares the name of the schema. !!! MUST BE UNIQUE !!!
+    structure: Table 
+    options: Table
+
+    -- Example:
+    local MySchema = Schema.Create(
+        "My Schema", ! Name !
+        {["SchemaName"]=schemaValue}, ! Structure !
+        {["CustomSetting"]={true, "OtherInfo"} ! Options !
+    })
+]]
+
+function Schema.Create(name: String, structure: table, options: table): Schema
     local self = Schema
     self.Name = name
     self.Structure = structure
     self.DataStore = DS:GetDataStore(`{name}-{datastoreNamePrefix[isStudio]}`)
 
-    if config then 
-        for settingName, value in config do 
-            self.Settings[settingName] = value
-        end
+    if options then
+        self.Options.Settings["Custom"] = options
     end
 
     return self
 end
 
---Session Serialisation Functions
+--[[
+    Returns: PROMISE (table)
+
+    Gets the user's data and loads into memory for future use
+
+    !!! To prevent data loss, data can only be serialised on one server. 
+    Attempts to serialise on multiple may lead to issues. !!!
+
+    -- Parameters
+    None. Handled Automatically by aDS.
+]]
+
 function Schema:Serialise()
     if not self.Id then return false end
 
@@ -83,14 +131,19 @@ function Schema:Serialise()
     end)
 end
 
---Session Settings
-function Schema:GetSettings()
-    return Promise.new(function(resolve) 
-        return resolve(self.Settings)
-    end)
-end
+--[[
+    Returns: PROMISE (table)
 
---Sync Functions
+    This function compares two tables. The first table is checked to see if has the same set of keys as the template. Missing keys are inserted.
+
+    -- Parameters
+    data: table ! Current Dataset. Usually self.structure !
+    template: table ! Template to compare. !
+
+    -- Example:
+    self:Sync(self.Structure, self.Template)
+]]
+
 function Schema:Sync(data, template) 
     return Promise.new(function(resolve, reject, onCancel) 
         if type(data) ~= "table" or type(template) ~= "table" then warn(`[{self.Name} - {Core.Product}] provided paramater(s) are not tables`) end
@@ -98,38 +151,90 @@ function Schema:Sync(data, template)
     end)
 end
 
---Key-value Functions
-function Schema:SetKey(path, key, value)
+--[[
+    Returns: PROMISE (true)
+
+    This function allows you to set or insert custom keys based on its path in the data structure
+
+    -- Parameters
+    path: table ! Defines the path to find or insert a key ! - !!! Does not work if you use keys that do not exist. Patch coming soon !!!
+    key: string ! Name of key to set !
+    value: any ! Value to set key to !
+
+    -- Example:
+    self:SetKey({"Path", "to", "table"}, "Key", "Value")
+]]
+
+function Schema:SetKey(key, value)
     return Promise.new(function(resolve, reject, onCancel) 
-        self.IsLocked = true
-        self.Structure = TableFunctions.FindAndEdit(path, self.Structure, key, value) 
+        self.Structure = TableFunctions.FindAndEdit(self.Structure, key, value) 
         Core.Events.KeyChanged:Fire(self.Id, key, value)
         return resolve(true)
     end)
 end
 
-function Schema:GetKey(path, key)
+--[[
+    Returns: PROMISE (key, value)
+
+    This function allows you to get a key and its value based on its path in the data structure
+
+    -- Parameters
+    path: table ! Defines the path to find the key ! - !!! Does not work if you use keys that do not exist. Patch coming soon !!!
+    key: string ! Name of key to find !
+
+    -- Example:
+    self:GetKey({"Path", "to", "key"}, "Key")
+]]
+
+function Schema:GetKey(key)
     return Promise.new(function(resolve, reject, onCancel) 
-        return resolve(TableFunctions.Find(path, self.Structure, key))
+        return resolve(TableFunctions.Find(self.Structure, key))
     end)
 end
 
--- Datastore Functions
-function Schema:Delete()
-    if not self.Id then return false end
-    warn(`[{self.Name} - {Core.Product}] Deleting Datastore with ID {self.Id}`)
+--[[
+    Returns: PROMISE
+
+    This function allows you to completely delete a session datastore. 
+
+    -- Calls
+    CloseSession(id, self.Name)
+
+    -- Parameters
+    id: any ! ID of the key that the data is stored in !
+
+    -- Example:
+    self:Delete(1)
+]]
+
+function Schema:Delete(id)
+    if not self.Id or not id then return false end
+
+    warn(`[{self.Name} - {Core.Product}] Deleting Datastore with ID {id or self.Id}`)
 
     return Promise.new(function(resolve, reject, onCancel) 
-        self.DataStore:RemoveAsync(self.Id)
+        self.DataStore:RemoveAsync(id or self.Id)
         --self:RefreshCache()
-        warn(`[{self.Name} - {Core.Product}] Closing Session`)
-        Core:CloseSession(self.Id, self.Name)
+
+        if self.Id then
+            warn(`[{self.Name} - {Core.Product}] Closing Session`)
+            Core:CloseSession(id or self.Id, self.Name)
+        end
         
         onCancel(function() 
             resolve(false)
         end)
     end)
 end
+
+--[[
+    Returns: PROMISE
+
+    This function allows you to save the current session
+
+    -- Example:
+    self:Start(1)
+]]
 
 function Schema:Save()
     if not self.Id then return false end
@@ -151,7 +256,7 @@ function Schema:Save()
                 return toSave 
             end
 
-            if oldData["Metadata"]["Session"][1] ~= game.PlaceId or oldData["Metadata"]["Session"][2] ~= game.JobId and (oldData["Metadated"]["LastModified"] - currentUTCTime) < self.Settings.assumeDeadSessionLock then 
+            if oldData["Metadata"]["Session"][1] ~= game.PlaceId or oldData["Metadata"]["Session"][2] ~= game.JobId and (oldData["Metadated"]["LastModified"] - currentUTCTime) < self.Options.Settings.assumeDeadSessionLock then 
                 warn(`[{self.Name} - {Core.Product}] UpdateAsync cancelled as session is currently in-use on another server`) return nil 
             end
 
@@ -176,7 +281,22 @@ function Schema:Save()
     end)
 end
 
---Session Code
+--[[
+    Returns: PROMISE
+
+    This function allows you to start a schema session
+
+    -- Calls
+    Serialise()
+    Save()
+
+    -- Parameters
+    id: any ! ID of the data structure in the datastore !
+
+    -- Example:
+    self:Start(1)
+]]
+
 function Schema:Start(id) 
     if self.Id then warn(`[{self.Name} - {Core.Product}] Session is currently active`) return false end
 
@@ -210,6 +330,21 @@ function Schema:Start(id)
         return resolve(self)
     end)
 end
+
+--[[
+    Returns: PROMISE
+
+    This function allows you to start a schema session
+
+    -- Calls
+    Save()
+
+    -- Parameters
+    refuseSave: boolean ! Unused at the moment !
+
+    -- Example:
+    self:Close(false)
+]]
 
 function Schema:Close(refuseSave)
     if refuseSave then return false end

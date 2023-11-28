@@ -1,10 +1,8 @@
---!nonstrict
-
---VERSION
+--VERSION CONTROL
 local main = 3
 local update = 0
 local milestone = 1
-local iteration = 1
+local iteration = 2
 local branch = "tb"
 
 --Imports
@@ -13,15 +11,6 @@ local PS = game:GetService("Players")
 local Promise = require(RS.Packages.Promise)
 local Signal = require(RS.Packages.Signal)
 
--- Object Types
---Middleware Types
-export type Middleware = {
-    Inbound: {MiddleWareFn}?,
-    Outbound: {MiddleWareFn}?
-}
-
-export type MFunction = (player: Player, args: {any}) -> (boolean, ...any)
-
 --Schema Type
 export type Schema = {
     Name: String,
@@ -29,8 +18,7 @@ export type Schema = {
     Settings: table,
     DataStore: DataStore,
     Structure: table,
-    Options: table,
-    Middleware: Middleware
+    Options: table
 }
 
 --Promise Type
@@ -55,21 +43,24 @@ local Core = {
     }, -- Alwion Only
 }
 
-function Core.Initialise(directory: Instance)
+function Core.Initialise(directory: Instance): Promise
+    if Core.Status.hasInitialised then return Promise.reject() end 
     print(`👋 {game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name} is supported by {Core.Product} ({Core.Version})`)
 
-    for _, schema in pairs(directory:GetChildren()) do 
-        local reqSchema = require(schema)
-
-        Core.Schemas[reqSchema.Name] = reqSchema
-        Core.ActiveSessions[reqSchema.Name] = {}
-
-        print(`[{Core.Product}] Initialised {reqSchema.Name}`)
-    end
-
-    Core.Status.hasInitialised = true
-    Core.Events.hasLoaded:Fire()
-    return true
+    return Promise.new(function(resolve) 
+        for _, schema in pairs(directory:GetChildren()) do 
+            local reqSchema = require(schema)
+    
+            Core.Schemas[reqSchema.Name] = reqSchema
+            Core.ActiveSessions[reqSchema.Name] = {}
+    
+            print(`[{Core.Product}] Initialised {reqSchema.Name}`)
+        end
+    
+        Core.Status.hasInitialised = true
+        Core.Events.hasLoaded:Fire()
+        resolve(true)
+    end)
 end
 
 function Core:GetSchema(name): Promise
@@ -94,11 +85,12 @@ function Core:GetSession(id, name): Promise
     return Promise.resolve(self.ActiveSessions[name][id])
 end
 
-function Core:CloseSession(id, session): Promise
-    local status, _ = session:Close()
-    if not status then warn(`[{self.Product}] Session ({id}) did not successfully save`) end
+function Core:GetSessionData(id, name): Promise 
+    if not id or not name then return Promise.reject(false) end
+    if not self.ActiveSessions[name] then return Promise.reject(false) end
+    if not self.ActiveSessions[name][id] then return Promise.reject(false) end
 
-    return Promise.resolve(true)
+    return Promise.resolve(self.ActiveSessions[name][id]["Structure"])
 end
 
 function Core:Shutdown(): Promise
@@ -106,7 +98,7 @@ function Core:Shutdown(): Promise
 
     for name, schema in pairs(self.ActiveSessions) do 
         for id, session in pairs(schema) do 
-            self:CloseSession(id, session)
+            session:Close()
             session = nil
             print(`[{self.Product}] Closed Serialised Schema ({name}) Session ({id})`)
         end 

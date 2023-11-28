@@ -15,21 +15,16 @@ PS.PlayerAdded:Connect(function(plr)
         if not status then plr:Kick("Failed to initialise a datastore session!") return Promise.reject(false) end
 
         return Promise.resolve(createdSession)
-    end):await()
-
-    print(`Loaded Session for {plr.Name}`)
-    print(session)
-
-    MDS.Events.KeyChanged:Connect(function(id, key, value) 
-        print(`Value changed! {id} {key} to {value}`)
+    end):andThen(function(session) 
+        print(`Loaded Session for {plr.Name}`)
+        print(session)
+    
+        MDS.Events.KeyChanged:Connect(function(id, key, value) 
+            print(`Value changed! {id} {key} to {value}`)
+        end)
+        
+        wait(1)
+        session:SetCoins(10) 
     end)
-
-    wait(1)
-    session:SetCoins(10) 
-
-    session:GetSettings():andThen(function(res) 
-        print(res)
-    end)
-
     --session:DeleteStore()
 end)
