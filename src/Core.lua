@@ -1,6 +1,4 @@
---!nonstrict
-
---VERSION
+--VERSION CONTROL
 local main = 3
 local update = 0
 local milestone = 1
@@ -12,8 +10,6 @@ local RS = game:GetService("ReplicatedStorage")
 local PS = game:GetService("Players")
 local Promise = require(RS.Packages.Promise)
 local Signal = require(RS.Packages.Signal)
-
--- Object Types
 
 --Schema Type
 export type Schema = {
@@ -87,6 +83,14 @@ function Core:GetSession(id, name): Promise
     if not self.ActiveSessions[name][id] then return Promise.reject(false) end
 
     return Promise.resolve(self.ActiveSessions[name][id])
+end
+
+function Core:GetSessionData(id, name): Promise 
+    if not id or not name then return Promise.reject(false) end
+    if not self.ActiveSessions[name] then return Promise.reject(false) end
+    if not self.ActiveSessions[name][id] then return Promise.reject(false) end
+
+    return Promise.resolve(self.ActiveSessions[name][id]["Structure"])
 end
 
 function Core:Shutdown(): Promise
