@@ -1,3 +1,16 @@
+--!nonstrict
+
+--[[
+     █████  ██      ██     ██ ██  ██████  ███    ██ 
+    ██   ██ ██      ██     ██ ██ ██    ██ ████   ██ 
+    ███████ ██      ██  █  ██ ██ ██    ██ ██ ██  ██ 
+    ██   ██ ██      ██ ███ ██ ██ ██    ██ ██  ██ ██ 
+    ██   ██ ███████  ███ ███  ██  ██████  ██   ████ 
+
+                    ALWION STUDIOS  
+                  ALL RIGHTS RESERVED
+                        ©️ 2024
+]]
 --Operator Variables
 local isStudio = false
 --Types

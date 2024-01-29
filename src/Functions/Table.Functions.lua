@@ -1,3 +1,17 @@
+--!nonstrict
+
+--[[
+     █████  ██      ██     ██ ██  ██████  ███    ██ 
+    ██   ██ ██      ██     ██ ██ ██    ██ ████   ██ 
+    ███████ ██      ██  █  ██ ██ ██    ██ ██ ██  ██ 
+    ██   ██ ██      ██ ███ ██ ██ ██    ██ ██  ██ ██ 
+    ██   ██ ███████  ███ ███  ██  ██████  ██   ████ 
+
+                    ALWION STUDIOS  
+                  ALL RIGHTS RESERVED
+                        ©️ 2024
+]]
+
 local RS = game:GetService("ReplicatedStorage")
 local Promise = require(RS.Packages.Promise)
 
